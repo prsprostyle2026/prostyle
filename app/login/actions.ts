@@ -15,7 +15,12 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     return { error: "Enter your username and password.", username };
   }
 
-  const user = checkCredentials(username, password);
+  let user: string | null;
+  try {
+    user = await checkCredentials(username, password);
+  } catch {
+    return { error: "Sign-in is unavailable right now. Please try again shortly.", username };
+  }
   if (!user) {
     return { error: "Incorrect username or password.", username };
   }

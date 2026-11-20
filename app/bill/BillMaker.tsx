@@ -1,135 +1,136 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent, type ReactNode } from "react";
-import { amountInWords } from "./amountInWords";
+import { balanceLabel } from "@/lib/format";
+import { createDocument, getCustomerBalance, updateDocument, type CustomerBalance, type DocInput } from "./bills";
+import { computeTotals } from "./calc";
 import CustomerPicker from "./CustomerPicker";
-import { GST_RATE_SUGGESTIONS, STATES, round2, taxBreakup } from "./gst";
+import {
+  BUSINESS_LABELS,
+  DEFAULT_BUSINESS,
+  DEFAULT_SIGNATURE,
+  DOC_TYPES,
+  NUMBER_PREFIX,
+  financialYear,
+  isBillingType,
+  type Business,
+  type DocCustomer,
+  type DocType,
+} from "./docTypes";
+import { GST_RATE_SUGGESTIONS, STATES, round2 } from "./gst";
 
-type DocType = "Quotation" | "Invoice" | "Proforma Invoice";
+// What the bill page passes in when editing a saved document or converting one.
+export type InitialDoc = {
+  mode: "edit" | "convert";
+  id: string; // the document being edited, or the quotation/proforma being converted
+  sourceLabel: string; // e.g. "Quotation EST/2026-27/004"
+  docType: DocType;
+  number: string; // edit: the fixed number; convert: ""
+  financialYear: string | null;
+  date: string;
+  dueDate: string;
+  customerId: string;
+  customer: DocCustomer;
+  items: { name: string; hsn: string; rate: number; qty: number; gst: number }[];
+  applyGst: boolean;
+  roundOff: boolean;
+  paid: number;
+  paymentNote: string;
+  business: Business;
+  signature: string;
+  balanceBefore: number; // the customer's balance before this document
+};
 
 type Item = { id: number; name: string; hsn: string; rate: string; qty: string; gst: string };
-
-type Business = {
-  name: string;
-  gstin: string;
-  address1: string;
-  address2: string;
-  address3: string;
-  bank: string;
-  accountHolder: string;
-  accountNumber: string;
-  ifsc: string;
-  branch: string;
-};
-
-// Defaults taken from EST-7. Edit here to change what every new bill starts with.
-const DEFAULT_BUSINESS: Business = {
-  name: "PROSTYLE SPORTS WEAR",
-  gstin: "29ABJFP8990N1Z0",
-  address1: "CN 83/131, GROUND FLOOR",
-  address2: "RAMNAIKANAHALLI, KATHRIGUPPE ROAD,OPPOSITE BANASHANKARI BRICKS, Bengaluru",
-  address3: "Bengaluru Urban, KARNATAKA, 562125",
-  bank: "HDFC Bank",
-  accountHolder: "PROSTYLE SPORTS WEAR",
-  accountNumber: "50200124091058",
-  ifsc: "HDFC0009233",
-  branch: "DAIRY CIRCLE ROAD",
-};
-
-// Stamp/signature shown above "Authorized Signatory". Replace public/signature.png to change it.
-const DEFAULT_SIGNATURE = "/signature.png";
 
 // GST % each new item starts with.
 const DEFAULT_GST_RATE = "5";
 
-const COPY_LABELS = [
-  "ORIGINAL FOR RECIPIENT",
-  "DUPLICATE FOR TRANSPORTER",
-  "TRIPLICATE FOR SUPPLIER",
-];
-
-const NUMBER_PREFIX: Record<DocType, string> = {
-  Quotation: "EST-",
-  Invoice: "INV-",
-  "Proforma Invoice": "PI-",
-};
-
 let nextItemId = 1;
-const newItem = (): Item => ({
-  id: nextItemId++,
-  name: "",
-  hsn: "",
-  rate: "",
-  qty: "",
-  gst: DEFAULT_GST_RATE,
-});
-
+const newItem = (): Item => ({ id: nextItemId++, name: "", hsn: "", rate: "", qty: "", gst: DEFAULT_GST_RATE });
 const toNumber = (v: string) => (Number.isFinite(parseFloat(v)) ? parseFloat(v) : 0);
-
-const money = (n: number) =>
-  n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = (n: number) => n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 function isoDate(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// "2026-11-16" -> "16 Nov 2026"
-function displayDate(iso: string) {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+const EMPTY_CUSTOMER: DocCustomer = { name: "", gstin: "", phone: "", email: "", details: "", placeOfSupply: "29-KARNATAKA" };
 
-export default function BillMaker() {
-  const [docType, setDocType] = useState<DocType>("Quotation");
-  const [copyLabel, setCopyLabel] = useState(COPY_LABELS[0]);
-  const [number, setNumber] = useState("EST-1");
+export default function BillMaker({ initial }: { initial?: InitialDoc }) {
+  const router = useRouter();
+  const mode = initial?.mode ?? "new";
+  const editing = mode === "edit";
+  const converting = mode === "convert";
+  // Edit and convert keep the original customer: their balance and history belong to them.
+  const customerLocked = editing || converting;
+
   // This component is client-only (see ClientBillMaker), so reading today's date here is safe.
-  const [date, setDate] = useState(() => isoDate(new Date()));
-  const [dueDate, setDueDate] = useState(() => isoDate(new Date()));
-  const [customerName, setCustomerName] = useState("");
-  const [customerGstin, setCustomerGstin] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerDetails, setCustomerDetails] = useState("");
-  const [placeOfSupply, setPlaceOfSupply] = useState("29-KARNATAKA");
-  const [items, setItems] = useState<Item[]>(() => [newItem()]);
-  const [applyGst, setApplyGst] = useState(true);
-  const [roundOff, setRoundOff] = useState(true);
-  const [advance, setAdvance] = useState("");
-  const [advanceNote, setAdvanceNote] = useState("");
-  const [business, setBusiness] = useState<Business>(DEFAULT_BUSINESS);
-  const [signature, setSignature] = useState(DEFAULT_SIGNATURE);
+  const today = isoDate(new Date());
+  const [docType, setDocType] = useState<DocType>(initial?.docType ?? "Quotation");
+  const [date, setDate] = useState(initial?.date ?? today);
+  const [dueDate, setDueDate] = useState(initial?.dueDate ?? today);
+  const [customerId, setCustomerId] = useState<string | null>(initial?.customerId ?? null);
+  const [customer, setCustomer] = useState<DocCustomer>(initial?.customer ?? EMPTY_CUSTOMER);
+  const [items, setItems] = useState<Item[]>(() =>
+    initial?.items.length
+      ? initial.items.map((i) => ({ id: nextItemId++, name: i.name, hsn: i.hsn, rate: String(i.rate), qty: String(i.qty), gst: String(i.gst) }))
+      : [newItem()],
+  );
+  const [applyGst, setApplyGst] = useState(initial?.applyGst ?? true);
+  const [roundOff, setRoundOff] = useState(initial?.roundOff ?? true);
+  const [advance, setAdvance] = useState(initial?.paid ? String(initial.paid) : "");
+  const [advanceNote, setAdvanceNote] = useState(initial?.paymentNote ?? "");
+  const [business, setBusiness] = useState<Business>(initial?.business ?? DEFAULT_BUSINESS);
+  const [signature, setSignature] = useState(initial?.signature ?? DEFAULT_SIGNATURE);
+  const [signatureError, setSignatureError] = useState("");
+  // Balance from the server: given up front when editing/converting, fetched when a customer is picked.
+  const [balance, setBalance] = useState<CustomerBalance | null>(
+    initial ? { pending: initial.balanceBefore, invoices: -1, customerBills: -1 } : null,
+  );
+  const [balanceError, setBalanceError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
-  const rows = items.map((it) => {
-    const taxable = round2(toNumber(it.rate) * toNumber(it.qty));
-    const gstRate = applyGst ? toNumber(it.gst) : 0;
-    const tax = round2((taxable * gstRate) / 100);
-    return { ...it, taxable, gstRate, tax, amount: round2(taxable + tax) };
-  });
-  const filledRows = rows.filter((r) => r.name.trim());
-  const totalQty = filledRows.reduce((sum, r) => sum + toNumber(r.qty), 0);
-  const taxableTotal = round2(filledRows.reduce((sum, r) => sum + r.taxable, 0));
-
-  // Same state as our GSTIN -> CGST + SGST, different state -> IGST.
-  const intraState = placeOfSupply.slice(0, 2) === business.gstin.slice(0, 2);
-  const taxLines = taxBreakup(filledRows, intraState);
-  const exactTotal = round2(taxableTotal + taxLines.reduce((sum, l) => sum + l.amount, 0));
-  const total = roundOff ? Math.round(exactTotal) : exactTotal;
-  const roundOffAmount = round2(total - exactTotal);
+  const isBilling = isBillingType(docType);
+  const isCustomerBill = docType === "Customer Bill";
+  const docItems = items.map((it) => ({
+    name: it.name,
+    hsn: it.hsn,
+    rate: toNumber(it.rate),
+    qty: toNumber(it.qty),
+    gst: toNumber(it.gst),
+  }));
+  const t = computeTotals({ items: docItems, applyGst, roundOff, placeOfSupply: customer.placeOfSupply, sellerGstin: business.gstin });
   const advancePaid = round2(toNumber(advance));
-  const balanceDue = round2(total - advancePaid);
+  const balanceBefore = balance?.pending ?? 0;
+  const previousBalance = isCustomerBill ? balanceBefore : 0;
+  const totalPayable = round2(t.total + previousBalance);
+  const balanceDue = round2(totalPayable - advancePaid);
+  const balanceAfter = round2(balanceBefore + t.total - advancePaid);
 
-  function changeDocType(t: DocType) {
-    // Swap the number prefix if the user hasn't customised it.
-    const oldPrefix = NUMBER_PREFIX[docType];
-    if (number.startsWith(oldPrefix)) setNumber(NUMBER_PREFIX[t] + number.slice(oldPrefix.length));
-    setDocType(t);
+  const fy = financialYear(date || today);
+  const numberPreview = editing ? initial!.number : `${NUMBER_PREFIX[docType]}/${fy}/…`;
+  const fyMismatch = editing && initial!.financialYear && financialYear(date) !== initial!.financialYear;
+
+  async function loadBalance(id: string) {
+    setBalance(null);
+    setBalanceError("");
+    try {
+      setBalance(await getCustomerBalance(id));
+    } catch {
+      setBalanceError("Could not fetch the pending balance. Pick the customer again to retry.");
+    }
+  }
+
+  function changeDocType(next: DocType) {
+    setDocType(next);
+    setSaveError("");
+    if (isBillingType(next) && customerId && !balance && !customerLocked) void loadBalance(customerId);
   }
 
   function updateItem(id: number, field: keyof Omit<Item, "id">, value: string) {
@@ -138,57 +139,87 @@ export default function BillMaker() {
 
   function onSignatureUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    setSignatureError("");
     if (!file) return;
+    if (file.size > 500_000) {
+      setSignatureError("Use an image under 500 KB.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setSignature(String(reader.result));
     reader.readAsDataURL(file);
   }
 
-  function printBill() {
-    // Browsers use the page title as the default PDF file name, e.g. "EST-7_for_Pradeep".
-    const original = document.title;
-    const who = customerName.trim().replace(/\s+/g, "_");
-    document.title = who ? `${number}_for_${who}` : number;
-    window.print();
-    document.title = original;
+  async function save() {
+    if (!customerId) return;
+    setSaving(true);
+    setSaveError("");
+    const input: DocInput = {
+      docType,
+      date,
+      dueDate,
+      customerId,
+      customer,
+      items: docItems,
+      applyGst,
+      roundOff,
+      paid: advancePaid,
+      paymentNote: advanceNote,
+      business,
+      signature,
+    };
+    try {
+      const result = editing
+        ? await updateDocument(initial!.id, input)
+        : await createDocument(input, converting ? initial!.id : null);
+      if (!result.ok) {
+        setSaveError(result.error);
+        setSaving(false);
+        return;
+      }
+      // Open the saved document, which has the Share PDF and Print buttons.
+      router.push(`/bills/${result.id}?saved=1`);
+    } catch {
+      setSaveError("Could not save. Check the connection and try again.");
+      setSaving(false);
+    }
   }
 
-  function newBill() {
-    if (!confirm("Clear the customer and items to start a new bill?")) return;
-    const match = number.match(/^(.*?)(\d+)$/);
-    if (match) setNumber(`${match[1]}${Number(match[2]) + 1}`);
-    setCustomerName("");
-    setCustomerGstin("");
-    setCustomerPhone("");
-    setCustomerEmail("");
-    setCustomerDetails("");
-    setItems([newItem()]);
-    setAdvance("");
-    setAdvanceNote("");
-  }
+  const title = editing ? `Edit ${initial!.sourceLabel}` : converting ? `Convert ${initial!.sourceLabel}` : "Create Bill";
+  const canSave = !!customerId && t.rows.length > 0 && !saving && !fyMismatch && (!isBilling || !!balance || !!balanceError);
 
   return (
-    <main className="mx-auto grid w-full max-w-7xl flex-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] print:block print:max-w-none print:p-0">
-      {/* ---------- Form ---------- */}
-      <section className="space-y-6 print:hidden">
+    // Form only. After saving, the document opens with Share and Print (see /bills/[id]).
+    // The Save bar is fixed to the bottom on phones and sticks to the bottom of the form on wide screens.
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-28 pt-6 sm:px-6 lg:pb-8 lg:pt-8">
+      <section className="space-y-6">
         <div>
-          <h1 className="text-2xl font-black uppercase italic tracking-tight">Create Bill</h1>
+          <h1 className="text-2xl font-black uppercase italic tracking-tight">{title}</h1>
           <p className="mt-1 text-sm text-foreground/60">
-            Fill in the details. The preview updates as you type.
+            {editing
+              ? "Changes are recorded in the customer's activity history."
+              : converting
+                ? "Choose Invoice or Customer Bill. The new document gets its own number and links back to the original."
+                : "Fill in the details and save. You can then share the PDF or print it."}
           </p>
         </div>
 
         <Fieldset title="Document">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Type">
-              <select className={inputCls} value={docType} onChange={(e) => changeDocType(e.target.value as DocType)}>
-                {(Object.keys(NUMBER_PREFIX) as DocType[]).map((t) => (
-                  <option key={t}>{t}</option>
+              <select
+                className={inputCls}
+                value={docType}
+                disabled={editing}
+                onChange={(e) => changeDocType(e.target.value as DocType)}
+              >
+                {DOC_TYPES.filter((d) => !converting || isBillingType(d)).map((d) => (
+                  <option key={d}>{d}</option>
                 ))}
               </select>
             </Field>
             <Field label="Number">
-              <input className={inputCls} value={number} onChange={(e) => setNumber(e.target.value)} />
+              <input className={`${inputCls} bg-foreground/5`} value={numberPreview} readOnly aria-describedby="number-help" />
             </Field>
             <Field label="Date">
               <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} />
@@ -197,48 +228,96 @@ export default function BillMaker() {
               <input type="date" className={inputCls} value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </Field>
           </div>
-          <Field label="Copy">
-            <select className={inputCls} value={copyLabel} onChange={(e) => setCopyLabel(e.target.value)}>
-              {COPY_LABELS.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </Field>
+          <p id="number-help" className="text-xs text-foreground/60">
+            {editing
+              ? "The number is fixed."
+              : "Numbers are assigned in order when you save, and restart each financial year (April–March)."}
+          </p>
+          {fyMismatch && (
+            <p className="text-xs font-semibold text-accent">
+              {initial!.number} belongs to financial year {initial!.financialYear}. Keep the date within it.
+            </p>
+          )}
         </Fieldset>
 
         <Fieldset title="Customer">
-          <CustomerPicker
-            onSelect={(c) => {
-              setCustomerName(c.name);
-              setCustomerGstin(c.gstin);
-              setCustomerPhone(c.phone);
-              setCustomerEmail(c.email);
-              setCustomerDetails(c.details);
-              setPlaceOfSupply(c.placeOfSupply);
-            }}
-          />
+          {customerLocked ? (
+            <p className="rounded-md bg-foreground/5 px-3 py-2 text-sm">
+              <span className="font-semibold">{customer.name}</span>
+              <span className="block text-xs text-foreground/60">
+                The customer can&apos;t be changed here. To bill someone else, cancel this document and create a new one.
+              </span>
+            </p>
+          ) : (
+            <CustomerPicker
+              onSelect={(c) => {
+                setCustomerId(c.id);
+                if (isBillingType(docType)) void loadBalance(c.id);
+                else setBalance(null);
+                setCustomer({
+                  name: c.name,
+                  gstin: c.gstin,
+                  phone: c.phone,
+                  email: c.email,
+                  details: c.details,
+                  placeOfSupply: c.placeOfSupply,
+                });
+              }}
+            />
+          )}
+          {!customerId && (
+            <p className="text-sm font-medium text-accent">Search or add a saved customer. Every document is saved against one.</p>
+          )}
+          {customerId && isBilling && (
+            <div className="rounded-md bg-foreground/5 px-3 py-2 text-sm">
+              {balanceError ? (
+                <p className="font-medium text-accent">{balanceError}</p>
+              ) : !balance ? (
+                <p className="text-foreground/60">Fetching pending balance…</p>
+              ) : (
+                <div className="flex items-baseline justify-between gap-3">
+                  <span>
+                    {editing ? "Balance before this document" : "Pending balance"}
+                    {balance.invoices >= 0 && (
+                      <span className="block text-xs text-foreground/60">
+                        {balance.invoices || balance.customerBills
+                          ? `From ${plural(balance.invoices, "invoice")} and ${plural(balance.customerBills, "customer bill")}, less payments`
+                          : "No earlier invoices or bills"}
+                      </span>
+                    )}
+                  </span>
+                  <span className={`font-bold ${balanceBefore > 0 ? "text-accent" : ""}`}>{balanceLabel(balanceBefore)}</span>
+                </div>
+              )}
+            </div>
+          )}
           <p className="border-t border-foreground/10 pt-3 text-xs text-foreground/60">
-            Details on this bill (edit here for a one-off change):
+            Details printed on this document (edit here for a one-off change):
           </p>
           <Field label="Name">
-            <input className={inputCls} value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Pradeep" />
+            <input className={inputCls} value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} />
           </Field>
           <Field label="GSTIN (optional)">
-            <input className={`${inputCls} uppercase`} value={customerGstin} maxLength={15} onChange={(e) => setCustomerGstin(e.target.value.toUpperCase())} />
+            <input
+              className={`${inputCls} uppercase`}
+              value={customer.gstin}
+              maxLength={15}
+              onChange={(e) => setCustomer({ ...customer, gstin: e.target.value.toUpperCase() })}
+            />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Phone (optional)">
-              <input className={inputCls} type="tel" inputMode="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+              <input className={inputCls} type="tel" inputMode="tel" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} />
             </Field>
             <Field label="Email (optional)">
-              <input className={inputCls} type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} />
+              <input className={inputCls} type="email" value={customer.email} onChange={(e) => setCustomer({ ...customer, email: e.target.value })} />
             </Field>
           </div>
           <Field label="Address (optional)">
-            <textarea rows={2} className={inputCls} value={customerDetails} onChange={(e) => setCustomerDetails(e.target.value)} />
+            <textarea rows={2} className={inputCls} value={customer.details} onChange={(e) => setCustomer({ ...customer, details: e.target.value })} />
           </Field>
           <Field label="Place of supply">
-            <select className={inputCls} value={placeOfSupply} onChange={(e) => setPlaceOfSupply(e.target.value)}>
+            <select className={inputCls} value={customer.placeOfSupply} onChange={(e) => setCustomer({ ...customer, placeOfSupply: e.target.value })}>
               {STATES.map(([code, name]) => (
                 <option key={code} value={`${code}-${name}`}>{`${code}-${name}`}</option>
               ))}
@@ -250,10 +329,10 @@ export default function BillMaker() {
           <Toggle checked={applyGst} onChange={setApplyGst} label="Apply GST" />
           {applyGst && (
             <p className="text-xs text-foreground/60">
-              {intraState
+              {t.intraState
                 ? "Same state as your GSTIN: tax is split into CGST + SGST."
-                : "Different state from your GSTIN: tax is charged as IGST."}
-              {" "}Item rates are entered before tax.
+                : "Different state from your GSTIN: tax is charged as IGST."}{" "}
+              Item rates are entered before tax.
             </p>
           )}
           <Toggle checked={roundOff} onChange={setRoundOff} label="Round total to nearest rupee" />
@@ -265,43 +344,47 @@ export default function BillMaker() {
               <option key={r} value={r} />
             ))}
           </datalist>
-          {rows.map((it, i) => (
-            <div key={it.id} className="space-y-2 rounded-lg border border-foreground/10 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground/60">Item {i + 1}</span>
-                {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setItems((prev) => prev.filter((x) => x.id !== it.id))}
-                    className="text-xs font-semibold text-accent hover:underline"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-              <input className={inputCls} placeholder="Item name, e.g. School set" value={it.name} onChange={(e) => updateItem(it.id, "name", e.target.value)} />
-              <div className={`grid gap-2 ${applyGst ? "grid-cols-4" : "grid-cols-3"}`}>
-                <SmallField label="HSN">
-                  <input className={inputCls} value={it.hsn} onChange={(e) => updateItem(it.id, "hsn", e.target.value)} />
-                </SmallField>
-                {applyGst && (
-                  <SmallField label="GST %">
-                    <input className={inputCls} type="number" min="0" step="0.01" list="gst-rates" value={it.gst} onChange={(e) => updateItem(it.id, "gst", e.target.value)} />
+          {items.map((it, i) => {
+            const taxable = round2(toNumber(it.rate) * toNumber(it.qty));
+            const tax = applyGst ? round2((taxable * toNumber(it.gst)) / 100) : 0;
+            return (
+              <div key={it.id} className="space-y-2 rounded-lg border border-foreground/10 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground/60">Item {i + 1}</span>
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setItems((prev) => prev.filter((x) => x.id !== it.id))}
+                      className="text-xs font-semibold text-accent hover:underline"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input className={inputCls} placeholder="Item name, e.g. School set" value={it.name} onChange={(e) => updateItem(it.id, "name", e.target.value)} />
+                <div className={`grid grid-cols-2 gap-2 ${applyGst ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
+                  <SmallField label="HSN">
+                    <input className={inputCls} value={it.hsn} onChange={(e) => updateItem(it.id, "hsn", e.target.value)} />
                   </SmallField>
-                )}
-                <SmallField label="Rate (₹)">
-                  <input className={inputCls} type="number" min="0" step="0.01" value={it.rate} onChange={(e) => updateItem(it.id, "rate", e.target.value)} />
-                </SmallField>
-                <SmallField label="Qty">
-                  <input className={inputCls} type="number" min="0" step="1" value={it.qty} onChange={(e) => updateItem(it.id, "qty", e.target.value)} />
-                </SmallField>
+                  {applyGst && (
+                    <SmallField label="GST %">
+                      <input className={inputCls} type="number" min="0" step="0.01" list="gst-rates" value={it.gst} onChange={(e) => updateItem(it.id, "gst", e.target.value)} />
+                    </SmallField>
+                  )}
+                  <SmallField label="Rate (₹)">
+                    <input className={inputCls} type="number" min="0" step="0.01" value={it.rate} onChange={(e) => updateItem(it.id, "rate", e.target.value)} />
+                  </SmallField>
+                  <SmallField label="Qty">
+                    <input className={inputCls} type="number" min="0" step="1" value={it.qty} onChange={(e) => updateItem(it.id, "qty", e.target.value)} />
+                  </SmallField>
+                </div>
+                <p className="text-right text-xs text-foreground/60">
+                  {tax > 0 && <>₹{money(taxable)} + ₹{money(tax)} GST = </>}
+                  Amount: ₹{money(round2(taxable + tax))}
+                </p>
               </div>
-              <p className="text-right text-xs text-foreground/60">
-                {applyGst && it.tax > 0 && <>₹{money(it.taxable)} + ₹{money(it.tax)} GST = </>}
-                Amount: ₹{money(it.amount)}
-              </p>
-            </div>
-          ))}
+            );
+          })}
           <button
             type="button"
             onClick={() => setItems((prev) => [...prev, newItem()])}
@@ -311,31 +394,87 @@ export default function BillMaker() {
           </button>
         </Fieldset>
 
+        <Fieldset title="Totals">
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-foreground/70">Items / Qty</dt>
+              <dd>{t.rows.length} / {t.totalQty}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-foreground/70">Taxable amount</dt>
+              <dd className="tabular-nums">₹{money(t.taxableTotal)}</dd>
+            </div>
+            {t.taxLines.map((l) => (
+              <div key={l.label} className="flex justify-between">
+                <dt className="text-foreground/70">{l.label}</dt>
+                <dd className="tabular-nums">₹{money(l.amount)}</dd>
+              </div>
+            ))}
+            {t.roundOffAmount !== 0 && (
+              <div className="flex justify-between">
+                <dt className="text-foreground/70">Round off</dt>
+                <dd className="tabular-nums">{t.roundOffAmount > 0 ? "+" : "-"}₹{money(Math.abs(t.roundOffAmount))}</dd>
+              </div>
+            )}
+            <div className="flex justify-between border-t border-foreground/10 pt-1.5 text-base font-bold">
+              <dt>Total</dt>
+              <dd className="tabular-nums">₹{money(t.total)}</dd>
+            </div>
+          </dl>
+        </Fieldset>
+
         <Fieldset title="Payment">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Advance paid (₹)">
+            <Field label={isCustomerBill ? "Amount paid now (₹)" : "Advance paid (₹)"}>
               <input className={inputCls} type="number" min="0" step="0.01" placeholder="0.00" value={advance} onChange={(e) => setAdvance(e.target.value)} />
             </Field>
             <Field label="Payment note (optional)">
               <input className={inputCls} placeholder="e.g. UPI, 10 Nov" value={advanceNote} onChange={(e) => setAdvanceNote(e.target.value)} />
             </Field>
           </div>
-          <div className="flex justify-between rounded-md bg-foreground/5 px-3 py-2 text-sm">
-            <span>Balance due</span>
-            <span className="font-bold">₹{money(balanceDue)}</span>
-          </div>
-          {advancePaid > total && (
+          <dl className="space-y-1 rounded-md bg-foreground/5 px-3 py-2 text-sm">
+            {isCustomerBill && (
+              <>
+                <div className="flex justify-between"><dt>This bill</dt><dd>₹{money(t.total)}</dd></div>
+                <div className="flex justify-between">
+                  <dt>Pending balance</dt>
+                  <dd>{previousBalance < 0 ? "-" : "+"}₹{money(Math.abs(previousBalance))}</dd>
+                </div>
+                {advancePaid > 0 && <div className="flex justify-between"><dt>Paid now</dt><dd>-₹{money(advancePaid)}</dd></div>}
+              </>
+            )}
+            <div className="flex justify-between font-bold">
+              <dt>{isCustomerBill ? "Balance after this bill" : "Balance due"}</dt>
+              <dd>₹{money(balanceDue)}</dd>
+            </div>
+            {docType === "Invoice" && customerId && balance && (
+              <div className="flex justify-between border-t border-foreground/10 pt-1 text-foreground/70">
+                <dt>Customer&apos;s total pending after this invoice</dt>
+                <dd>{balanceLabel(balanceAfter)}</dd>
+              </div>
+            )}
+          </dl>
+          {!isBilling && advancePaid > 0 && (
+            <p className="text-xs text-foreground/60">
+              An advance on a {docType.toLowerCase()} isn&apos;t added to the customer&apos;s account until it&apos;s converted into
+              an invoice or customer bill.
+            </p>
+          )}
+          {advancePaid > totalPayable && (
             <p className="text-xs font-semibold text-accent">
-              Advance is more than the bill total. The customer has overpaid by ₹{money(-balanceDue)}.
+              {isCustomerBill
+                ? `Payment is more than what is owed. The customer will have ₹${money(-balanceDue)} credit.`
+                : `Advance is more than the total. The customer has overpaid by ₹${money(-balanceDue)}.`}
             </p>
           )}
         </Fieldset>
 
         <Fieldset title="Authorized signature">
           <p className="text-xs text-foreground/60">
-            The Prostyle stamp is added by default. Upload a different image to use it for this bill only.
+            The Prostyle stamp is added by default. Upload a different image (under 500 KB) to use it on this document only.
           </p>
-          <input type="file" accept="image/*" onChange={onSignatureUpload} className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-foreground/10 file:px-3 file:py-2 file:text-sm file:font-semibold" />
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={onSignatureUpload} className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-foreground/10 file:px-3 file:py-2 file:text-sm file:font-semibold" />
+          {signatureError && <p className="text-xs font-semibold text-accent">{signatureError}</p>}
           <div className="flex gap-4">
             {signature !== DEFAULT_SIGNATURE && (
               <button type="button" onClick={() => setSignature(DEFAULT_SIGNATURE)} className="text-xs font-semibold text-accent hover:underline">
@@ -351,194 +490,51 @@ export default function BillMaker() {
         </Fieldset>
 
         <details className="rounded-xl border border-foreground/10 p-4">
-          <summary className="cursor-pointer text-sm font-bold uppercase tracking-wider">
-            Business &amp; bank details
-          </summary>
+          <summary className="cursor-pointer text-sm font-bold uppercase tracking-wider">Business &amp; bank details</summary>
           <div className="mt-4 space-y-3">
             {(Object.keys(DEFAULT_BUSINESS) as (keyof Business)[]).map((key) => (
               <Field key={key} label={BUSINESS_LABELS[key]}>
-                <input
-                  className={inputCls}
-                  value={business[key]}
-                  onChange={(e) => setBusiness((b) => ({ ...b, [key]: e.target.value }))}
-                />
+                <input className={inputCls} value={business[key]} onChange={(e) => setBusiness((b) => ({ ...b, [key]: e.target.value }))} />
               </Field>
             ))}
           </div>
         </details>
 
-        <div className="sticky bottom-4 flex gap-3">
-          <button type="button" onClick={printBill} className="flex-1 rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg hover:bg-accent-hover">
-            Print / Save as PDF
-          </button>
-          <button type="button" onClick={newBill} className="rounded-lg border border-foreground/20 bg-background px-4 py-3 text-sm font-semibold hover:bg-foreground/5">
-            New bill
-          </button>
-        </div>
       </section>
 
-      {/* ---------- Preview (this is what gets printed) ---------- */}
-      <section className="min-w-0 overflow-x-auto print:overflow-visible">
-        <div className="bill-sheet mx-auto flex min-h-[297mm] w-[210mm] flex-col bg-white p-[12mm] text-[13px] text-neutral-800 shadow-xl ring-1 ring-black/5 print:shadow-none print:ring-0">
-          <div className="flex items-start justify-between">
-            <p className="text-lg font-bold uppercase tracking-[0.3em] text-blue-600">{docType}</p>
-            <p className="pt-1 text-[11px] font-medium tracking-wider text-neutral-500">{copyLabel}</p>
+      {/* ---------- Save bar: fixed to the bottom on phones, sticky under the form on wide screens ---------- */}
+      <div className="fixed inset-x-0 bottom-0 z-40 space-y-2 border-t border-foreground/10 bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:sticky lg:bottom-4 lg:mt-6 lg:rounded-xl lg:border lg:p-3 lg:shadow-lg">
+        {saveError && <p role="alert" className="text-sm font-medium text-accent">{saveError}</p>}
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 shrink-0 text-right leading-tight">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/60">Total</p>
+            <p className="text-lg font-black tabular-nums">₹{money(t.total)}</p>
           </div>
-
-          <h2 className="mt-3 text-2xl font-bold text-neutral-900">{business.name}</h2>
-          <p className="text-[12px]">
-            <span className="font-semibold">GSTIN</span> <span className="font-bold">{business.gstin}</span>
-          </p>
-          <p className="leading-snug">{business.address1}</p>
-          <p className="leading-snug">{business.address2}</p>
-          <p className="leading-snug">{business.address3}</p>
-
-          <div className="mt-4 grid grid-cols-3 text-[12px]">
-            <p><span className="font-semibold">{docType} #:</span> <span className="text-[14px] font-bold">{number}</span></p>
-            <p><span className="font-semibold">{docType} Date:</span> <span className="text-[14px] font-bold">{displayDate(date)}</span></p>
-            <p><span className="font-semibold">{docType === "Quotation" ? "Validity" : "Due Date"}:</span> <span className="text-[14px]">{displayDate(dueDate)}</span></p>
-          </div>
-
-          <p className="mt-4 text-[12px] font-semibold">Customer Details:</p>
-          <p className="mt-1 font-bold">{customerName || "—"}</p>
-          {customerGstin && <p className="text-[12px]"><span className="font-semibold">GSTIN</span> {customerGstin}</p>}
-          {customerDetails && <p className="whitespace-pre-line text-[12px]">{customerDetails}</p>}
-          {customerPhone && <p className="text-[12px]"><span className="font-semibold">Ph:</span> {customerPhone}</p>}
-          {customerEmail && <p className="text-[12px]"><span className="font-semibold">Email:</span> {customerEmail}</p>}
-          <p className="mt-3 text-[12px] font-semibold">Place of Supply:</p>
-          <p className="font-bold">{placeOfSupply}</p>
-
-          <table className="mt-4 w-full border-collapse text-[12px]">
-            <thead>
-              <tr className="border-y border-blue-600 bg-blue-50/60">
-                <th className="w-7 py-1.5 pl-2 text-left font-semibold">#</th>
-                <th className="py-1.5 text-left font-semibold">Item</th>
-                <th className="w-24 py-1.5 text-right font-semibold">Rate / Item</th>
-                <th className="w-14 py-1.5 text-center font-semibold">Qty</th>
-                {applyGst && (
-                  <>
-                    <th className="w-24 py-1.5 text-right font-semibold">Taxable Value</th>
-                    <th className="w-24 py-1.5 text-right font-semibold">Tax Amount</th>
-                  </>
-                )}
-                <th className="w-28 py-1.5 pr-2 text-right font-semibold">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filledRows.map((r, i) => (
-                <tr key={r.id} className="border-b border-neutral-200">
-                  <td className="py-2 pl-2 align-middle">{i + 1}</td>
-                  <td className="py-2">
-                    <p className="text-[13px] font-semibold text-neutral-900">{r.name}</p>
-                    {r.hsn && <p className="text-[11px] text-neutral-600">HSN: {r.hsn}</p>}
-                  </td>
-                  <td className="py-2 text-right font-semibold">{money(toNumber(r.rate))}</td>
-                  <td className="py-2 text-center">{r.qty}</td>
-                  {applyGst && (
-                    <>
-                      <td className="py-2 text-right">{money(r.taxable)}</td>
-                      <td className="py-2 text-right">
-                        {money(r.tax)}
-                        <span className="block text-[10px] text-neutral-500">({r.gstRate}%)</span>
-                      </td>
-                    </>
-                  )}
-                  <td className="py-2 pr-2 text-right">{money(r.amount)}</td>
-                </tr>
-              ))}
-              {filledRows.length === 0 && (
-                <tr className="border-b border-neutral-200">
-                  <td colSpan={applyGst ? 7 : 5} className="py-6 text-center text-neutral-400 print:hidden">
-                    Add items in the form to see them here
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          <div className="mt-2 flex justify-end">
-            <div className="w-64 text-[12px]">
-              {(taxLines.length > 0 || roundOffAmount !== 0) && (
-                <dl className="mb-1 space-y-0.5">
-                  <SummaryRow label="Taxable Amount" value={`₹${money(taxableTotal)}`} />
-                  {taxLines.map((l) => (
-                    <SummaryRow key={l.label} label={l.label} value={`₹${money(l.amount)}`} />
-                  ))}
-                  {roundOffAmount !== 0 && (
-                    <SummaryRow label="Round Off" value={`${roundOffAmount > 0 ? "+" : "-"}₹${money(Math.abs(roundOffAmount))}`} />
-                  )}
-                </dl>
-              )}
-              <div className="flex items-baseline justify-between border-t border-neutral-300 pt-1 text-lg font-bold text-neutral-900">
-                <span>Total</span>
-                <span>₹{money(total)}</span>
-              </div>
-              {advancePaid > 0 && (
-                <>
-                  <dl className="mt-1 space-y-0.5">
-                    <SummaryRow
-                      label={advanceNote ? `Advance Paid (${advanceNote})` : "Advance Paid"}
-                      value={`-₹${money(advancePaid)}`}
-                    />
-                  </dl>
-                  <div className="mt-1 flex items-baseline justify-between border-t border-neutral-300 pt-1 text-base font-bold text-blue-600">
-                    <span>{balanceDue < 0 ? "Excess Paid" : "Balance Due"}</span>
-                    <span>₹{money(Math.abs(balanceDue))}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="mt-1 flex justify-between gap-4 border-b border-blue-600 pb-1 text-[11px]">
-            <span className="shrink-0 pl-2">Total Items / Qty : {filledRows.length} / {totalQty}</span>
-            <span className="text-right">Total amount (in words): {amountInWords(total)}</span>
-          </div>
-
-          <div className="mt-6 flex justify-between gap-6">
-            <div>
-              <p className="text-[12px] font-semibold">Bank Details:</p>
-              <dl className="mt-1 grid grid-cols-[9rem_1fr] gap-y-1 text-[12px]">
-                <dt>Bank:</dt><dd className="font-semibold">{business.bank}</dd>
-                <dt>Account Holder:</dt><dd className="font-semibold">{business.accountHolder}</dd>
-                <dt>Account #:</dt><dd className="font-semibold">{business.accountNumber}</dd>
-                <dt>IFSC Code:</dt><dd className="font-semibold">{business.ifsc}</dd>
-                <dt>Branch:</dt><dd className="font-semibold">{business.branch}</dd>
-              </dl>
-            </div>
-            <div className="flex w-52 shrink-0 flex-col items-center text-[12px]">
-              <p className="text-neutral-600">For {business.name}</p>
-              <div className="flex h-24 w-full items-center justify-center">
-                {signature ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- may be a user-uploaded data URL
-                  <img src={signature} alt="Authorized signature" className="max-h-22 max-w-full object-contain" />
-                ) : (
-                  <span className="text-[11px] text-neutral-300 print:hidden">Signature / stamp</span>
-                )}
-              </div>
-              <p className="text-neutral-600">Authorized Signatory</p>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={save}
+            disabled={!canSave}
+            title={!customerId ? "Pick a saved customer first" : t.rows.length === 0 ? "Add at least one item" : undefined}
+            className="flex-1 rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg hover:bg-accent-hover disabled:bg-foreground/30 disabled:shadow-none"
+          >
+            {saving ? "Saving…" : editing ? "Save changes" : "Save"}
+          </button>
+          {customerLocked && (
+            <Link
+              href={`/bills/${initial!.id}`}
+              className="rounded-lg border border-foreground/20 bg-background px-4 py-3 text-sm font-semibold hover:bg-foreground/5"
+            >
+              Cancel
+            </Link>
+          )}
         </div>
-      </section>
+      </div>
     </main>
   );
 }
 
-const BUSINESS_LABELS: Record<keyof Business, string> = {
-  name: "Business name",
-  gstin: "GSTIN",
-  address1: "Address line 1",
-  address2: "Address line 2",
-  address3: "Address line 3",
-  bank: "Bank",
-  accountHolder: "Account holder",
-  accountNumber: "Account number",
-  ifsc: "IFSC code",
-  branch: "Branch",
-};
-
 const inputCls =
-  "w-full rounded-md border border-foreground/15 bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
+  "w-full rounded-md border border-foreground/15 bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-60";
 
 function Fieldset({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -573,14 +569,5 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-(--accent)" />
       {label}
     </label>
-  );
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between">
-      <dt className="text-neutral-600">{label}</dt>
-      <dd>{value}</dd>
-    </div>
   );
 }

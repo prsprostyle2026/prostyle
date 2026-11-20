@@ -45,4 +45,21 @@ body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  /* Sheets shrunk to fit a phone screen print at full A4 size. */
+  .fit-outer {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .fit-inner {
+    transform: none !important;
+  }
+}
+
+/* Phones: 16px text in form fields stops iPhone Safari zooming in on every tap. */
+@media screen and (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

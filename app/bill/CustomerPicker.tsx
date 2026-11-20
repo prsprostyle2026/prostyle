@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
+import { deleteCustomer, listCustomers, saveCustomer } from "./customers";
 import { STATES } from "./gst";
+import { isValidPhone, phoneKey } from "./phone";
 
 export type Customer = {
   id: string;
@@ -13,27 +15,20 @@ export type Customer = {
   placeOfSupply: string;
 };
 
-// Saved customers live in this browser's localStorage (per computer/browser).
-const STORAGE_KEY = "prostyle.customers";
+// Customers are stored in Postgres (see ./customers.ts). They used to live in this
+// browser's localStorage; any found there are uploaded once, then removed.
+const LEGACY_STORAGE_KEY = "prostyle.customers";
 
-function loadCustomers(): Customer[] {
+function readLegacyCustomers(): Partial<Customer>[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const list = raw ? (JSON.parse(raw) as Partial<Customer>[]) : [];
-    // Customers saved before phone/email existed get empty values.
-    return list.map((c) => ({ phone: "", email: "", ...c }) as Customer);
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Partial<Customer>[]) : [];
   } catch {
     return [];
   }
 }
 
-function storeCustomers(list: Customer[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  } catch {
-    // Storage blocked or full: the list still works until the page is closed.
-  }
-}
+const sortByName =(list: Customer[]) => [...list].sort((a, b) => a.name.localeCompare(b.name));
 
 const EMPTY_FORM = { name: "", gstin: "", phone: "", email: "", details: "", placeOfSupply: "29-KARNATAKA" };
 
@@ -41,21 +36,13 @@ type FormErrors = { name?: string; phone?: string };
 
 const errorCls = "border-accent ring-2 ring-accent/30";
 
-// Accepts 10 digits, optionally prefixed with 0 or +91/91, with spaces or dashes.
-function isValidPhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  return (
-    digits.length === 10 ||
-    (digits.length === 11 && digits.startsWith("0")) ||
-    (digits.length === 12 && digits.startsWith("91"))
-  );
-}
-
 const inputCls =
   "w-full rounded-md border border-foreground/15 bg-background px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) => void }) {
-  const [customers, setCustomers] = useState<Customer[]>(loadCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -64,11 +51,47 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
 
-  function save(list: Customer[]) {
-    const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
-    setCustomers(sorted);
-    storeCustomers(sorted);
-  }
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const legacy = readLegacyCustomers().filter((c) => c.name?.trim());
+        const notUploaded: Partial<Customer>[] = [];
+        for (const c of legacy) {
+          const result = await saveCustomer({
+            name: c.name ?? "",
+            gstin: c.gstin ?? "",
+            phone: c.phone ?? "",
+            email: c.email ?? "",
+            details: c.details ?? "",
+            placeOfSupply: c.placeOfSupply ?? EMPTY_FORM.placeOfSupply,
+          });
+          if (!result.ok) notUploaded.push(c);
+        }
+        if (legacy.length) {
+          // Keep any that were rejected (e.g. duplicate phone) so they aren't lost.
+          try {
+            if (notUploaded.length) localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(notUploaded));
+            else localStorage.removeItem(LEGACY_STORAGE_KEY);
+          } catch {}
+          if (notUploaded.length && !cancelled) {
+            setMessage(
+              `Not moved to the database (name or phone problem; add them again): ${notUploaded.map((c) => c.name).join(", ")}.`,
+            );
+          }
+        }
+        const list = await listCustomers();
+        if (!cancelled) setCustomers(sortByName(list));
+      } catch {
+        if (!cancelled) setMessage("Could not load saved customers. Check the database connection.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const q = query.trim().toLowerCase();
   const matches = q
@@ -100,12 +123,18 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
     }
   }
 
-  function remove(c: Customer) {
+  async function remove(c: Customer) {
     if (!confirm(`Delete saved customer "${c.name}"?`)) return;
-    save(customers.filter((x) => x.id !== c.id));
+    try {
+      const result = await deleteCustomer(c.id);
+      if (!result.ok) return setMessage(result.error);
+      setCustomers((list) => list.filter((x) => x.id !== c.id));
+    } catch {
+      setMessage(`Could not delete ${c.name}. Try again.`);
+    }
   }
 
-  function addCustomer() {
+  async function addCustomer() {
     const name = form.name.trim();
     const errs: FormErrors = {};
     if (!name) errs.name = "Customer name is required.";
@@ -115,16 +144,31 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
     if (errs.name || errs.phone) return;
     // Same name again updates the existing entry instead of creating a duplicate.
     const existing = customers.find((c) => c.name.toLowerCase() === name.toLowerCase());
-    const customer: Customer = {
-      id: existing?.id ?? crypto.randomUUID(),
-      name,
-      gstin: form.gstin.trim().toUpperCase(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      details: form.details.trim(),
-      placeOfSupply: form.placeOfSupply,
-    };
-    save([...customers.filter((c) => c.id !== customer.id), customer]);
+    // Quick check against the loaded list; the database enforces it too.
+    const phoneOwner = customers.find(
+      (c) => c.phone && c.name.toLowerCase() !== name.toLowerCase() && phoneKey(c.phone) === phoneKey(form.phone),
+    );
+    if (phoneOwner) {
+      setErrors({ phone: `This phone number already belongs to ${phoneOwner.name}.` });
+      return;
+    }
+    let customer: Customer;
+    setSaving(true);
+    try {
+      const result = await saveCustomer({ ...form, name });
+      if (!result.ok) {
+        if (result.field) setErrors({ [result.field]: result.error });
+        else setMessage(result.error);
+        return;
+      }
+      customer = result.customer;
+    } catch {
+      setMessage("Could not save the customer. Check the database connection.");
+      return;
+    } finally {
+      setSaving(false);
+    }
+    setCustomers((list) => sortByName([...list.filter((c) => c.id !== customer.id), customer]));
     onSelect(customer);
     setForm(EMPTY_FORM);
     setErrors({});
@@ -147,7 +191,7 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
             aria-controls="customer-results"
             autoComplete="off"
             className={`${inputCls} pr-9`}
-            placeholder={customers.length ? `Search ${customers.length} saved customers…` : "No saved customers yet"}
+            placeholder={loading ? "Loading customers…" : customers.length ?`Search ${customers.length} saved customers…` : "No saved customers yet"}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -275,8 +319,8 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
               ))}
             </select>
             <div className="flex gap-2">
-              <button type="button" onClick={addCustomer} className="flex-1 rounded-md bg-accent py-2 text-sm font-bold text-white hover:bg-accent-hover">
-                Save customer
+              <button type="button" onClick={addCustomer} disabled={saving} className="flex-1 rounded-md bg-accent py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-60">
+                {saving ? "Saving…" : "Save customer"}
               </button>
               <button type="button" onClick={() => { setAddOpen(false); setForm(EMPTY_FORM); setErrors({}); }} className="rounded-md border border-foreground/20 px-3 py-2 text-sm font-semibold hover:bg-foreground/5">
                 Cancel
