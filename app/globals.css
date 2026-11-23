@@ -1,11 +1,14 @@
 @import "tailwindcss";
 
+/* Brand: black and gold, taken from the Prostyle logo (public/logo.png). */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  /* Brand accent. Swap for the logo's primary colour once it's available. */
-  --accent: #e11d48;
-  --accent-hover: #be123c;
+  --foreground: #141414;
+  --accent: #d4a12a; /* gold fill: buttons, highlights */
+  --accent-hover: #b8871a;
+  --accent-foreground: #0b0b0b; /* text on a gold fill */
+  --accent-ink: #8a6508; /* gold text on the page background (readable on white) */
+  --danger: #c81e1e; /* errors and cancel actions */
 }
 
 @theme inline {
@@ -13,16 +16,30 @@
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* Fixed gold palette: printed documents, and the white header/footer bars around the logo. */
+@theme {
+  --color-gold: #c9971c;
+  --color-gold-dark: #8a6508;
+  --color-gold-soft: #fbf4e1;
+  --color-gold-light: #f5c842;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --accent: #f43f5e;
-    --accent-hover: #fb7185;
+    --accent: #e0b03a;
+    --accent-hover: #f0c456;
+    --accent-foreground: #0b0b0b;
+    --accent-ink: #e8b93f;
+    --danger: #f87171;
   }
 }
 

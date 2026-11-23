@@ -18,7 +18,7 @@ export function DocTypeBadge({ type }: { type: DocType }) {
 
 export function CancelledBadge() {
   return (
-    <span className="ml-1 rounded bg-accent/15 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-accent">
+    <span className="ml-1 rounded bg-danger/15 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-danger">
       Cancelled
     </span>
   );
@@ -28,7 +28,7 @@ export function CancelledBadge() {
 export default function BillItems({ items }: { items: { name: string; qty: number; rate: number; gst: number }[] }) {
   return (
     <details className="mt-0.5 text-xs">
-      <summary className="cursor-pointer text-foreground/60 hover:text-accent">
+      <summary className="cursor-pointer text-foreground/60 hover:text-accent-ink">
         {items.length} {items.length === 1 ? "item" : "items"}
       </summary>
       <ul className="mt-1 space-y-0.5 text-foreground/70">

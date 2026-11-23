@@ -57,7 +57,7 @@ async function StaffContent() {
                           </span>
                         )}
                         {u.username === me && (
-                          <span className="ml-2 rounded bg-accent/10 px-1.5 py-0.5 text-[11px] font-bold uppercase text-accent">
+                          <span className="ml-2 rounded bg-accent/10 px-1.5 py-0.5 text-[11px] font-bold uppercase text-accent-ink">
                             You
                           </span>
                         )}

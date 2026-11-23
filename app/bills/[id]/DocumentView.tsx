@@ -91,7 +91,7 @@ export default function DocumentView({
     <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 px-4 py-6 sm:px-6 lg:gap-8 lg:py-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] print:block print:max-w-none print:p-0">
       <aside className="space-y-4 print:hidden">
         <div>
-          <Link href={`/customers/${doc.customerId}`} className="text-sm font-semibold text-foreground/60 hover:text-accent">
+          <Link href={`/customers/${doc.customerId}`} className="text-sm font-semibold text-foreground/60 hover:text-accent-ink">
             ← {doc.customer.name}
           </Link>
           <h1 className="mt-1 text-2xl font-black uppercase italic tracking-tight">{doc.docType}</h1>
@@ -110,7 +110,7 @@ export default function DocumentView({
             type="button"
             onClick={share}
             disabled={sharing}
-            className="flex items-center justify-center gap-2 rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-white hover:bg-accent-hover disabled:opacity-60"
+            className="flex items-center justify-center gap-2 rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14" />
@@ -120,7 +120,7 @@ export default function DocumentView({
           <button
             type="button"
             onClick={print}
-            className="flex items-center justify-center gap-2 rounded-lg border-2 border-accent py-3 text-sm font-bold uppercase tracking-wider text-accent hover:bg-accent/10"
+            className="flex items-center justify-center gap-2 rounded-lg border-2 border-accent py-3 text-sm font-bold uppercase tracking-wider text-accent-ink hover:bg-accent/10"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
@@ -131,8 +131,8 @@ export default function DocumentView({
         {shareMsg && <p role="status" className="text-sm text-foreground/70">{shareMsg}</p>}
 
         {doc.voided && (
-          <div className="rounded-xl border border-accent/40 bg-accent/10 p-3 text-sm">
-            <p className="font-bold text-accent">Cancelled</p>
+          <div className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm">
+            <p className="font-bold text-danger">Cancelled</p>
             <p className="mt-1">{doc.voidReason}</p>
             <p className="mt-1 text-xs text-foreground/60">by {doc.voidedBy} on {doc.voidedAt}</p>
           </div>
@@ -146,7 +146,7 @@ export default function DocumentView({
           {doc.convertedFrom && (
             <Row
               label="Converted from"
-              value={<Link className="text-accent hover:underline" href={`/bills/${doc.convertedFrom.id}`}>{doc.convertedFrom.docType} {doc.convertedFrom.number}</Link>}
+              value={<Link className="text-accent-ink hover:underline" href={`/bills/${doc.convertedFrom.id}`}>{doc.convertedFrom.docType} {doc.convertedFrom.number}</Link>}
             />
           )}
           {doc.convertedTo.map((c) => (
@@ -154,7 +154,7 @@ export default function DocumentView({
               key={c.id}
               label="Converted to"
               value={
-                <Link className="text-accent hover:underline" href={`/bills/${c.id}`}>
+                <Link className="text-accent-ink hover:underline" href={`/bills/${c.id}`}>
                   {c.docType} {c.number}{c.voided ? " (cancelled)" : ""}
                 </Link>
               }
@@ -189,14 +189,14 @@ export default function DocumentView({
               </Link>
             </div>
           )}
-          <Link href="/bill" className="py-1 text-center text-sm font-semibold text-foreground/60 hover:text-accent">
+          <Link href="/bill" className="py-1 text-center text-sm font-semibold text-foreground/60 hover:text-accent-ink">
             + Create another
           </Link>
         </div>
 
         {!doc.voided && (
           <details className="rounded-xl border border-foreground/10 p-3" open={!!voidState?.error}>
-            <summary className="cursor-pointer text-sm font-semibold text-accent">Cancel this {doc.docType.toLowerCase()}</summary>
+            <summary className="cursor-pointer text-sm font-semibold text-danger">Cancel this {doc.docType.toLowerCase()}</summary>
             <form action={voidAction} className="mt-3 space-y-2">
               <p className="text-xs text-foreground/60">
                 It keeps its number and stays on record marked &quot;Cancelled&quot;, but no longer counts toward the
@@ -206,8 +206,8 @@ export default function DocumentView({
                 <span className="text-xs font-medium text-foreground/70">Reason</span>
                 <input name="reason" required minLength={3} maxLength={300} placeholder="e.g. Wrong customer, re-issued" className="w-full rounded-md border border-foreground/15 bg-background px-3 py-2 text-sm" />
               </label>
-              {voidState?.error && <p role="alert" className="text-xs font-medium text-accent">{voidState.error}</p>}
-              <button type="submit" disabled={voiding} className="w-full rounded-md border border-accent py-2 text-sm font-bold text-accent hover:bg-accent/10 disabled:opacity-60">
+              {voidState?.error && <p role="alert" className="text-xs font-medium text-danger">{voidState.error}</p>}
+              <button type="submit" disabled={voiding} className="w-full rounded-md border border-danger py-2 text-sm font-bold text-danger hover:bg-danger/10 disabled:opacity-60">
                 {voiding ? "Cancelling…" : "Cancel document"}
               </button>
             </form>

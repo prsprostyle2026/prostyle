@@ -35,7 +35,7 @@ export default function PrintButton({ fileName, autoPrint = false, label = "Prin
     <button
       type="button"
       onClick={() => printAs(fileName)}
-      className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover sm:w-auto print:hidden"
+      className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground hover:bg-accent-hover sm:w-auto print:hidden"
     >
       {label}
     </button>

@@ -234,7 +234,7 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
               : "Numbers are assigned in order when you save, and restart each financial year (April–March)."}
           </p>
           {fyMismatch && (
-            <p className="text-xs font-semibold text-accent">
+            <p className="text-xs font-semibold text-accent-ink">
               {initial!.number} belongs to financial year {initial!.financialYear}. Keep the date within it.
             </p>
           )}
@@ -266,12 +266,12 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
             />
           )}
           {!customerId && (
-            <p className="text-sm font-medium text-accent">Search or add a saved customer. Every document is saved against one.</p>
+            <p className="text-sm font-medium text-accent-ink">Search or add a saved customer. Every document is saved against one.</p>
           )}
           {customerId && isBilling && (
             <div className="rounded-md bg-foreground/5 px-3 py-2 text-sm">
               {balanceError ? (
-                <p className="font-medium text-accent">{balanceError}</p>
+                <p className="font-medium text-danger">{balanceError}</p>
               ) : !balance ? (
                 <p className="text-foreground/60">Fetching pending balance…</p>
               ) : (
@@ -286,7 +286,7 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
                       </span>
                     )}
                   </span>
-                  <span className={`font-bold ${balanceBefore > 0 ? "text-accent" : ""}`}>{balanceLabel(balanceBefore)}</span>
+                  <span className={`font-bold ${balanceBefore > 0 ? "text-accent-ink" : ""}`}>{balanceLabel(balanceBefore)}</span>
                 </div>
               )}
             </div>
@@ -355,7 +355,7 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
                     <button
                       type="button"
                       onClick={() => setItems((prev) => prev.filter((x) => x.id !== it.id))}
-                      className="text-xs font-semibold text-accent hover:underline"
+                      className="text-xs font-semibold text-accent-ink hover:underline"
                     >
                       Remove
                     </button>
@@ -388,7 +388,7 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
           <button
             type="button"
             onClick={() => setItems((prev) => [...prev, newItem()])}
-            className="w-full rounded-lg border border-dashed border-foreground/25 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
+            className="w-full rounded-lg border border-dashed border-foreground/25 py-2 text-sm font-semibold hover:border-accent hover:text-accent-ink"
           >
             + Add item
           </button>
@@ -461,7 +461,7 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
             </p>
           )}
           {advancePaid > totalPayable && (
-            <p className="text-xs font-semibold text-accent">
+            <p className="text-xs font-semibold text-accent-ink">
               {isCustomerBill
                 ? `Payment is more than what is owed. The customer will have ₹${money(-balanceDue)} credit.`
                 : `Advance is more than the total. The customer has overpaid by ₹${money(-balanceDue)}.`}
@@ -474,15 +474,15 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
             The Prostyle stamp is added by default. Upload a different image (under 500 KB) to use it on this document only.
           </p>
           <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={onSignatureUpload} className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-foreground/10 file:px-3 file:py-2 file:text-sm file:font-semibold" />
-          {signatureError && <p className="text-xs font-semibold text-accent">{signatureError}</p>}
+          {signatureError && <p className="text-xs font-semibold text-danger">{signatureError}</p>}
           <div className="flex gap-4">
             {signature !== DEFAULT_SIGNATURE && (
-              <button type="button" onClick={() => setSignature(DEFAULT_SIGNATURE)} className="text-xs font-semibold text-accent hover:underline">
+              <button type="button" onClick={() => setSignature(DEFAULT_SIGNATURE)} className="text-xs font-semibold text-accent-ink hover:underline">
                 Use Prostyle stamp
               </button>
             )}
             {signature && (
-              <button type="button" onClick={() => setSignature("")} className="text-xs font-semibold text-accent hover:underline">
+              <button type="button" onClick={() => setSignature("")} className="text-xs font-semibold text-accent-ink hover:underline">
                 Remove signature
               </button>
             )}
@@ -504,7 +504,7 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
 
       {/* ---------- Save bar: fixed to the bottom on phones, sticky under the form on wide screens ---------- */}
       <div className="fixed inset-x-0 bottom-0 z-40 space-y-2 border-t border-foreground/10 bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:sticky lg:bottom-4 lg:mt-6 lg:rounded-xl lg:border lg:p-3 lg:shadow-lg">
-        {saveError && <p role="alert" className="text-sm font-medium text-accent">{saveError}</p>}
+        {saveError && <p role="alert" className="text-sm font-medium text-danger">{saveError}</p>}
         <div className="flex items-center gap-3">
           <div className="min-w-0 shrink-0 text-right leading-tight">
             <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/60">Total</p>
@@ -515,7 +515,7 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
             onClick={save}
             disabled={!canSave}
             title={!customerId ? "Pick a saved customer first" : t.rows.length === 0 ? "Add at least one item" : undefined}
-            className="flex-1 rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg hover:bg-accent-hover disabled:bg-foreground/30 disabled:shadow-none"
+            className="flex-1 rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-accent-foreground shadow-lg hover:bg-accent-hover disabled:bg-foreground/30 disabled:shadow-none"
           >
             {saving ? "Saving…" : editing ? "Save changes" : "Save"}
           </button>

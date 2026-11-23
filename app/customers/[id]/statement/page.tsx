@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import SheetLogo from "@/app/bill/SheetLogo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -59,7 +60,7 @@ async function StatementContent({
       <StaffBar user={user} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:p-0">
         <div className="mb-4 space-y-3 print:hidden">
-          <Link href={`/customers/${id}`} className="text-sm font-semibold text-foreground/60 hover:text-accent">
+          <Link href={`/customers/${id}`} className="text-sm font-semibold text-foreground/60 hover:text-accent-ink">
             ← {customer.name}
           </Link>
           <DateRangeForm from={from} to={to}>
@@ -68,13 +69,16 @@ async function StatementContent({
         </div>
 
         <FitToWidth>
-          <div className="bill-sheet mx-auto min-h-[297mm] w-[210mm] bg-white p-[12mm] text-[12px] text-neutral-800 shadow-xl ring-1 ring-black/5 print:shadow-none print:ring-0">
-            <p className="text-lg font-bold uppercase tracking-[0.3em] text-blue-600">Statement of Account</p>
-            <h2 className="mt-3 text-2xl font-bold text-neutral-900">{business.name}</h2>
-            <p><span className="font-semibold">GSTIN</span> <span className="font-bold">{business.gstin}</span></p>
-            <p className="leading-snug">{business.address1}</p>
-            <p className="leading-snug">{business.address2}</p>
-            <p className="leading-snug">{business.address3}</p>
+          <div className="bill-sheet relative mx-auto min-h-[297mm] w-[210mm] bg-white p-[12mm] text-[12px] text-neutral-800 shadow-xl ring-1 ring-black/5 print:shadow-none print:ring-0">
+            <SheetLogo />
+            <p className="text-lg font-bold uppercase tracking-[0.3em] text-gold-dark">Statement of Account</p>
+            <div className="pr-[50mm]">
+              <h2 className="mt-3 text-2xl font-bold text-neutral-900">{business.name}</h2>
+              <p><span className="font-semibold">GSTIN</span> <span className="font-bold">{business.gstin}</span></p>
+              <p className="leading-snug">{business.address1}</p>
+              <p className="leading-snug">{business.address2}</p>
+              <p className="leading-snug">{business.address3}</p>
+            </div>
 
             <div className="mt-5 flex justify-between gap-6">
               <div>
@@ -92,7 +96,7 @@ async function StatementContent({
 
             <table className="mt-5 w-full border-collapse">
               <thead>
-                <tr className="border-y border-blue-600 bg-blue-50/60 text-left">
+                <tr className="border-y border-gold bg-gold-soft text-left">
                   <th className="py-1.5 pl-2 font-semibold">Date</th>
                   <th className="py-1.5 font-semibold">Particulars</th>
                   <th className="py-1.5 text-right font-semibold">Debit (₹)</th>
@@ -135,7 +139,7 @@ async function StatementContent({
                 )}
               </tbody>
               <tfoot>
-                <tr className="border-b border-blue-600 font-semibold">
+                <tr className="border-b border-gold font-semibold">
                   <td className="py-1.5 pl-2" colSpan={2}>Totals for the period</td>
                   <td className="py-1.5 text-right tabular-nums">{money(totalDebit)}</td>
                   <td className="py-1.5 text-right tabular-nums">{money(totalCredit)}</td>
@@ -145,7 +149,7 @@ async function StatementContent({
             </table>
 
             <div className="mt-3 flex justify-end">
-              <div className="w-72 rounded-lg border-2 border-blue-600 px-4 py-2 text-blue-600">
+              <div className="w-72 rounded-lg border-2 border-gold px-4 py-2 text-gold-dark">
                 <div className="flex items-baseline justify-between text-base font-bold">
                   <span>{closing < 0 ? "Credit balance" : "Balance due"}</span>
                   <span>₹{money(Math.abs(closing))}</span>

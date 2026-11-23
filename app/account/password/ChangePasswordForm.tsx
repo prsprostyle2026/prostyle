@@ -27,7 +27,7 @@ export default function ChangePasswordForm({ username }: { username: string }) {
       </label>
 
       {state?.error && (
-        <p role="alert" className="text-sm font-medium text-accent">{state.error}</p>
+        <p role="alert" className="text-sm font-medium text-danger">{state.error}</p>
       )}
       {state?.success && (
         <p role="status" className="text-sm font-medium text-green-700 dark:text-green-400">{state.success}</p>
@@ -36,7 +36,7 @@ export default function ChangePasswordForm({ username }: { username: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-white hover:bg-accent-hover disabled:opacity-60"
+        className="w-full rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
       >
         {pending ? "Saving…" : "Change password"}
       </button>

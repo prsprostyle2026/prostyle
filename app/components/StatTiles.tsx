@@ -9,7 +9,7 @@ export default function StatTiles({ tiles, className = "mt-6" }: { tiles: Tile[]
         <div key={t.label} className="min-w-0 rounded-xl border border-foreground/10 p-3 sm:p-4">
           <dt className="text-xs font-medium text-foreground/60">{t.label}</dt>
           <dd
-            className={`mt-1 break-words text-lg font-black leading-tight tabular-nums sm:text-2xl ${t.strong ? "text-accent" : ""}`}
+            className={`mt-1 break-words text-lg font-black leading-tight tabular-nums sm:text-2xl ${t.strong ? "text-accent-ink" : ""}`}
           >
             {t.value}
           </dd>

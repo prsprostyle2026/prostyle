@@ -62,7 +62,7 @@ export default function CustomersDashboard({ customers, stats }: { customers: Da
         <button
           type="button"
           onClick={() => setEditing("new")}
-          className="rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"
+          className="rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground hover:bg-accent-hover"
         >
           + Add customer
         </button>
@@ -98,7 +98,7 @@ export default function CustomersDashboard({ customers, stats }: { customers: Da
             <Link href={`/customers/${c.id}`} className="block px-4 pb-2 pt-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="truncate font-semibold">{c.name}</span>
-                <span className={`shrink-0 tabular-nums ${c.pending > 0 ? "font-semibold text-accent" : "text-sm text-foreground/60"}`}>
+                <span className={`shrink-0 tabular-nums ${c.pending > 0 ? "font-semibold text-accent-ink" : "text-sm text-foreground/60"}`}>
                   {c.pending ? balanceLabel(c.pending) : "No dues"}
                 </span>
               </div>
@@ -113,7 +113,7 @@ export default function CustomersDashboard({ customers, stats }: { customers: Da
               <button type="button" onClick={() => setEditing(c)} className="flex-1 border-x border-foreground/10 py-2.5 hover:bg-foreground/5">
                 Edit
               </button>
-              <button type="button" onClick={() => remove(c)} className="flex-1 py-2.5 text-accent hover:bg-accent/10">
+              <button type="button" onClick={() => remove(c)} className="flex-1 py-2.5 text-danger hover:bg-danger/10">
                 Delete
               </button>
             </div>
@@ -145,7 +145,7 @@ export default function CustomersDashboard({ customers, stats }: { customers: Da
             {shown.map((c) => (
               <tr key={c.id} className="align-top hover:bg-foreground/[0.02]">
                 <td className="px-4 py-3">
-                  <Link href={`/customers/${c.id}`} className="font-semibold hover:text-accent hover:underline">
+                  <Link href={`/customers/${c.id}`} className="font-semibold hover:text-accent-ink hover:underline">
                     {c.name}
                   </Link>
                   {(c.email || c.details) && (
@@ -156,7 +156,7 @@ export default function CustomersDashboard({ customers, stats }: { customers: Da
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 tabular-nums">{c.phone || "—"}</td>
                 <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{c.gstin || "—"}</td>
-                <td className={`whitespace-nowrap px-4 py-3 text-right tabular-nums ${c.pending > 0 ? "font-semibold text-accent" : "text-foreground/60"}`}>
+                <td className={`whitespace-nowrap px-4 py-3 text-right tabular-nums ${c.pending > 0 ? "font-semibold text-accent-ink" : "text-foreground/60"}`}>
                   {c.pending ? balanceLabel(c.pending) : "—"}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-foreground/60">{c.added}</td>
@@ -177,7 +177,7 @@ export default function CustomersDashboard({ customers, stats }: { customers: Da
                   <button
                     type="button"
                     onClick={() => remove(c)}
-                    className="rounded-md px-2 py-1 text-xs font-semibold text-accent hover:bg-accent/10"
+                    className="rounded-md px-2 py-1 text-xs font-semibold text-danger hover:bg-danger/10"
                   >
                     Delete
                   </button>

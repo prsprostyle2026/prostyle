@@ -255,7 +255,7 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
                     e.stopPropagation();
                     remove(c);
                   }}
-                  className="shrink-0 rounded px-1.5 text-foreground/40 hover:bg-accent/10 hover:text-accent"
+                  className="shrink-0 rounded px-1.5 text-foreground/40 hover:bg-accent/10 hover:text-accent-ink"
                 >
                   ✕
                 </button>
@@ -271,7 +271,7 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
           type="button"
           aria-expanded={addOpen}
           onClick={() => setAddOpen((o) => !o)}
-          className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold hover:text-accent"
+          className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold hover:text-accent-ink"
         >
           <span>+ Add customer</span>
           <svg viewBox="0 0 20 20" className={`h-4 w-4 transition-transform ${addOpen ? "rotate-180" : ""}`} fill="currentColor">
@@ -292,7 +292,7 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
                   if (errors.name) setErrors({ ...errors, name: undefined });
                 }}
               />
-              {errors.name && <p className="mt-1 text-xs font-medium text-accent">{errors.name}</p>}
+              {errors.name && <p className="mt-1 text-xs font-medium text-danger">{errors.name}</p>}
             </div>
             <div>
               <input
@@ -308,7 +308,7 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
                   if (errors.phone) setErrors({ ...errors, phone: undefined });
                 }}
               />
-              {errors.phone && <p className="mt-1 text-xs font-medium text-accent">{errors.phone}</p>}
+              {errors.phone && <p className="mt-1 text-xs font-medium text-danger">{errors.phone}</p>}
             </div>
             <input className={`${inputCls} uppercase`} placeholder="GSTIN (optional)" maxLength={15} value={form.gstin} onChange={(e) => setForm({ ...form, gstin: e.target.value })} />
             <input className={inputCls} type="email" placeholder="Email (optional)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
@@ -319,7 +319,7 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
               ))}
             </select>
             <div className="flex gap-2">
-              <button type="button" onClick={addCustomer} disabled={saving} className="flex-1 rounded-md bg-accent py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-60">
+              <button type="button" onClick={addCustomer} disabled={saving} className="flex-1 rounded-md bg-accent py-2 text-sm font-bold text-accent-foreground hover:bg-accent-hover disabled:opacity-60">
                 {saving ? "Saving…" : "Save customer"}
               </button>
               <button type="button" onClick={() => { setAddOpen(false); setForm(EMPTY_FORM); setErrors({}); }} className="rounded-md border border-foreground/20 px-3 py-2 text-sm font-semibold hover:bg-foreground/5">
@@ -330,7 +330,7 @@ export default function CustomerPicker({ onSelect }: { onSelect: (c: Customer) =
         )}
       </div>
 
-      {message && <p className="text-xs font-medium text-accent" role="status">{message}</p>}
+      {message && <p className="text-xs font-medium text-accent-ink" role="status">{message}</p>}
     </div>
   );
 }

@@ -34,7 +34,7 @@ export default function AddStaffForm() {
       </label>
 
       {state?.error && (
-        <p role="alert" className="text-sm font-medium text-accent">{state.error}</p>
+        <p role="alert" className="text-sm font-medium text-danger">{state.error}</p>
       )}
       {state?.success && (
         <p role="status" className="text-sm font-medium text-green-700 dark:text-green-400">{state.success}</p>
@@ -43,7 +43,7 @@ export default function AddStaffForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-accent py-2.5 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-60"
+        className="w-full rounded-lg bg-accent py-2.5 text-sm font-bold text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
       >
         {pending ? "Adding…" : "Add staff user"}
       </button>

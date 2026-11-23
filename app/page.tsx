@@ -1,5 +1,7 @@
+import ContactDetails from "./components/ContactDetails";
 import Countdown from "./components/Countdown";
 import NotifyForm from "./components/NotifyForm";
+import { FullLogo } from "./components/Logo";
 
 // Launch date shown in the countdown. Update this to your real launch date.
 const LAUNCH_DATE = "2027-01-01T00:00:00Z";
@@ -13,9 +15,7 @@ export default function Home() {
       />
 
       <div className="relative w-full max-w-2xl text-center">
-        <p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-accent">
-          Prostyle Sports Wear
-        </p>
+        <FullLogo className="mx-auto mb-8 w-64 sm:w-80" />
         <h1 className="text-5xl font-black uppercase italic tracking-tight sm:text-7xl">
           Coming Soon
         </h1>
@@ -28,6 +28,11 @@ export default function Home() {
         <div id="notify" className="scroll-mt-32">
           <NotifyForm />
         </div>
+
+        <section id="contact" aria-labelledby="contact-heading" className="mx-auto mt-14 max-w-md scroll-mt-32 rounded-2xl border border-foreground/10 bg-foreground/3 px-6 py-5 text-left">
+          <h2 id="contact-heading" className="text-xs font-bold uppercase tracking-[0.2em] text-accent-ink">Contact us</h2>
+          <ContactDetails tone="page" className="mt-3" />
+        </section>
       </div>
     </main>
   );

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import SheetLogo from "@/app/bill/SheetLogo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -45,15 +46,15 @@ async function ReceiptContent({
       <StaffBar user={user} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:p-0">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
-          <Link href={`/customers/${p.customerId}`} className="text-sm font-semibold text-foreground/60 hover:text-accent">
+          <Link href={`/customers/${p.customerId}`} className="text-sm font-semibold text-foreground/60 hover:text-accent-ink">
             ← {p.customerName}
           </Link>
           <PrintButton fileName={`${no}_${p.customerName.replace(/\s+/g, "_")}`} autoPrint={sp.print === "1" && !p.voided} />
         </div>
 
         {p.voided && (
-          <div className="mb-4 rounded-xl border border-accent/40 bg-accent/10 p-3 text-sm print:hidden">
-            <p className="font-bold text-accent">This payment was cancelled</p>
+          <div className="mb-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm print:hidden">
+            <p className="font-bold text-danger">This payment was cancelled</p>
             <p className="mt-1">{p.voidReason}</p>
             <p className="mt-1 text-xs text-foreground/60">by {p.voidedBy} on {p.voidedAt}</p>
           </div>
@@ -68,19 +69,22 @@ async function ReceiptContent({
                 </span>
               </div>
             )}
-            <p className="text-lg font-bold uppercase tracking-[0.3em] text-blue-600">Payment Receipt</p>
-            <h2 className="mt-3 text-2xl font-bold text-neutral-900">{business.name}</h2>
-            <p className="text-[12px]"><span className="font-semibold">GSTIN</span> <span className="font-bold">{business.gstin}</span></p>
-            <p className="leading-snug">{business.address1}</p>
-            <p className="leading-snug">{business.address2}</p>
-            <p className="leading-snug">{business.address3}</p>
+            <SheetLogo />
+            <p className="text-lg font-bold uppercase tracking-[0.3em] text-gold-dark">Payment Receipt</p>
+            <div className="pr-[50mm]">
+              <h2 className="mt-3 text-2xl font-bold text-neutral-900">{business.name}</h2>
+              <p className="text-[12px]"><span className="font-semibold">GSTIN</span> <span className="font-bold">{business.gstin}</span></p>
+              <p className="leading-snug">{business.address1}</p>
+              <p className="leading-snug">{business.address2}</p>
+              <p className="leading-snug">{business.address3}</p>
+            </div>
 
             <div className="mt-6 grid grid-cols-2 gap-y-1 text-[12px]">
               <p><span className="font-semibold">Receipt #:</span> <span className="text-[14px] font-bold">{no}</span></p>
               <p className="text-right"><span className="font-semibold">Date:</span> <span className="text-[14px] font-bold">{displayDate(p.paidOn)}</span></p>
             </div>
 
-            <div className="mt-6 space-y-3 border-y border-blue-600 py-5 text-[14px]">
+            <div className="mt-6 space-y-3 border-y border-gold py-5 text-[14px]">
               <p>
                 Received with thanks from <span className="font-bold">{p.customerName}</span>
                 {p.customerPhone && <span className="text-neutral-600"> ({p.customerPhone})</span>}
@@ -103,7 +107,7 @@ async function ReceiptContent({
                 )}
                 <p className="mt-1 text-neutral-500">Recorded by {p.createdBy}, {p.createdAt}</p>
               </div>
-              <div className="rounded-lg border-2 border-blue-600 px-5 py-2 text-2xl font-bold text-blue-600">{rupees(p.amount)}</div>
+              <div className="rounded-lg border-2 border-gold px-5 py-2 text-2xl font-bold text-gold-dark">{rupees(p.amount)}</div>
             </div>
 
             <div className="mt-12 flex justify-end text-[12px]">

@@ -52,7 +52,7 @@ export default function BillsTable({ bills }: { bills: BillRow[] }) {
               type="button"
               aria-pressed={type === t}
               onClick={() => setType(t)}
-              className={`rounded px-3 py-1.5 font-semibold ${type === t ? "bg-accent text-white" : "text-foreground/70 hover:bg-foreground/5"}`}
+              className={`rounded px-3 py-1.5 font-semibold ${type === t ? "bg-accent text-accent-foreground" : "text-foreground/70 hover:bg-foreground/5"}`}
             >
               {TYPE_LABEL[t]}
             </button>
@@ -132,7 +132,7 @@ export default function BillsTable({ bills }: { bills: BillRow[] }) {
               <tr key={b.id} className={`align-top hover:bg-foreground/[0.02] ${b.voided ? "text-foreground/50" : ""}`}>
                 <td className="px-4 py-3">
                   <p className="font-semibold">
-                    <Link href={`/bills/${b.id}`} className={`hover:text-accent hover:underline ${b.voided ? "line-through" : ""}`}>
+                    <Link href={`/bills/${b.id}`} className={`hover:text-accent-ink hover:underline ${b.voided ? "line-through" : ""}`}>
                       {b.number}
                     </Link>
                     <DocTypeBadge type={b.docType} />
@@ -143,7 +143,7 @@ export default function BillsTable({ bills }: { bills: BillRow[] }) {
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">{b.billDate}</td>
                 <td className="px-4 py-3">
-                  <Link href={`/customers/${b.customerId}`} className="font-semibold hover:text-accent hover:underline">
+                  <Link href={`/customers/${b.customerId}`} className="font-semibold hover:text-accent-ink hover:underline">
                     {b.customerName}
                   </Link>
                 </td>

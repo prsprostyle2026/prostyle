@@ -52,7 +52,7 @@ async function GstContent({ searchParams }: { searchParams: PageProps<"/reports/
         </p>
 
         <DateRangeForm from={from} to={to}>
-          <a href={`/reports/gst/export?${qs}&kind=invoices`} className="flex-1 rounded-md bg-accent px-3 py-2.5 text-center text-sm font-bold text-white hover:bg-accent-hover sm:flex-none sm:py-2">
+          <a href={`/reports/gst/export?${qs}&kind=invoices`} className="flex-1 rounded-md bg-accent px-3 py-2.5 text-center text-sm font-bold text-accent-foreground hover:bg-accent-hover sm:flex-none sm:py-2">
             Download invoices CSV
           </a>
           <a href={`/reports/gst/export?${qs}&kind=rates`} className="flex-1 rounded-md border border-foreground/20 px-3 py-2.5 text-center text-sm font-semibold hover:bg-foreground/5 sm:flex-none sm:py-2">
@@ -142,7 +142,7 @@ function InvoiceTable({ invoices, b2b }: { invoices: Awaited<ReturnType<typeof g
           {invoices.flatMap((inv) =>
             (inv.rates.length ? inv.rates : [{ rate: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0 }]).map((l, i) => (
               <tr key={`${inv.id}-${l.rate}`} className={i ? "text-foreground/80" : ""}>
-                <Td>{i === 0 && <Link href={`/bills/${inv.id}`} className="font-semibold hover:text-accent hover:underline">{inv.number}</Link>}</Td>
+                <Td>{i === 0 && <Link href={`/bills/${inv.id}`} className="font-semibold hover:text-accent-ink hover:underline">{inv.number}</Link>}</Td>
                 <Td>{i === 0 && displayDate(inv.date)}</Td>
                 <Td>{i === 0 && inv.customerName}</Td>
                 {b2b && <Td>{i === 0 && <span className="font-mono text-xs">{inv.gstin}</span>}</Td>}

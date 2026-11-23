@@ -1,6 +1,7 @@
 // The printed A4 document. Used for the live preview while editing and for reprinting
 // saved documents, so both always look the same.
 import { amountInWords } from "./amountInWords";
+import SheetLogo from "./SheetLogo";
 import { computeTotals, type DocItem } from "./calc";
 import type { Business, DocCustomer, DocType } from "./docTypes";
 import { round2 } from "./gst";
@@ -55,18 +56,21 @@ export default function BillSheet({ doc }: { doc: SheetData }) {
           </span>
         </div>
       )}
+      <SheetLogo />
       <div className="flex items-start justify-between">
-        <p className="text-lg font-bold uppercase tracking-[0.3em] text-blue-600">{docType}</p>
+        <p className="text-lg font-bold uppercase tracking-[0.3em] text-gold-dark">{docType}</p>
         <p className="pt-1 text-[11px] font-medium tracking-wider text-neutral-500">{doc.copyLabel}</p>
       </div>
 
-      <h2 className="mt-3 text-2xl font-bold text-neutral-900">{business.name}</h2>
-      <p className="text-[12px]">
-        <span className="font-semibold">GSTIN</span> <span className="font-bold">{business.gstin}</span>
-      </p>
-      <p className="leading-snug">{business.address1}</p>
-      <p className="leading-snug">{business.address2}</p>
-      <p className="leading-snug">{business.address3}</p>
+      <div className="pr-[50mm]">
+        <h2 className="mt-3 text-2xl font-bold text-neutral-900">{business.name}</h2>
+        <p className="text-[12px]">
+          <span className="font-semibold">GSTIN</span> <span className="font-bold">{business.gstin}</span>
+        </p>
+        <p className="leading-snug">{business.address1}</p>
+        <p className="leading-snug">{business.address2}</p>
+        <p className="leading-snug">{business.address3}</p>
+      </div>
 
       <div className="mt-4 grid grid-cols-3 text-[12px]">
         <p><span className="font-semibold">{docType} #:</span> <span className="text-[14px] font-bold">{doc.number}</span></p>
@@ -85,7 +89,7 @@ export default function BillSheet({ doc }: { doc: SheetData }) {
 
       <table className="mt-4 w-full border-collapse text-[12px]">
         <thead>
-          <tr className="border-y border-blue-600 bg-blue-50/60">
+          <tr className="border-y border-gold bg-gold-soft">
             <th className="w-7 py-1.5 pl-2 text-left font-semibold">#</th>
             <th className="py-1.5 text-left font-semibold">Item</th>
             <th className="w-24 py-1.5 text-right font-semibold">Rate / Item</th>
@@ -173,7 +177,7 @@ export default function BillSheet({ doc }: { doc: SheetData }) {
                   />
                 )}
               </dl>
-              <div className="mt-1 flex items-baseline justify-between border-t border-neutral-300 pt-1 text-base font-bold text-blue-600">
+              <div className="mt-1 flex items-baseline justify-between border-t border-neutral-300 pt-1 text-base font-bold text-gold-dark">
                 <span>{balanceDue < 0 ? "Credit Balance" : "Balance Due"}</span>
                 <span>₹{money(Math.abs(balanceDue))}</span>
               </div>
@@ -187,7 +191,7 @@ export default function BillSheet({ doc }: { doc: SheetData }) {
                     value={`-₹${money(doc.paid)}`}
                   />
                 </dl>
-                <div className="mt-1 flex items-baseline justify-between border-t border-neutral-300 pt-1 text-base font-bold text-blue-600">
+                <div className="mt-1 flex items-baseline justify-between border-t border-neutral-300 pt-1 text-base font-bold text-gold-dark">
                   <span>{balanceDue < 0 ? "Excess Paid" : "Balance Due"}</span>
                   <span>₹{money(Math.abs(balanceDue))}</span>
                 </div>
@@ -196,7 +200,7 @@ export default function BillSheet({ doc }: { doc: SheetData }) {
           )}
         </div>
       </div>
-      <div className="mt-1 flex justify-between gap-4 border-b border-blue-600 pb-1 text-[11px]">
+      <div className="mt-1 flex justify-between gap-4 border-b border-gold pb-1 text-[11px]">
         <span className="shrink-0 pl-2">Total Items / Qty : {t.rows.length} / {t.totalQty}</span>
         <span className="text-right">Total amount (in words): {amountInWords(t.total)}</span>
       </div>

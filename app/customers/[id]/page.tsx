@@ -47,7 +47,7 @@ async function CustomerContent({ params }: { params: PageProps<"/customers/[id]"
     <>
       <StaffBar user={me} />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        <Link href="/customers" className="text-sm font-semibold text-foreground/60 hover:text-accent">
+        <Link href="/customers" className="text-sm font-semibold text-foreground/60 hover:text-accent-ink">
           ← All customers
         </Link>
 
@@ -74,7 +74,7 @@ async function CustomerContent({ params }: { params: PageProps<"/customers/[id]"
             </Link>
             <Link
               href={`/customers/${id}/payment`}
-              className="rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-accent-hover"
+              className="rounded-lg bg-accent px-4 py-2.5 text-center text-sm font-bold text-accent-foreground hover:bg-accent-hover"
             >
               + Record payment
             </Link>
@@ -126,7 +126,7 @@ async function CustomerContent({ params }: { params: PageProps<"/customers/[id]"
                     <tr key={b.id} className={`align-top ${b.voided ? "text-foreground/50" : ""}`}>
                       <td className="px-4 py-3">
                         <p className="font-semibold">
-                          <Link href={`/bills/${b.id}`} className={`hover:text-accent hover:underline ${b.voided ? "line-through" : ""}`}>
+                          <Link href={`/bills/${b.id}`} className={`hover:text-accent-ink hover:underline ${b.voided ? "line-through" : ""}`}>
                             {b.number}
                           </Link>
                           <DocTypeBadge type={b.docType} />
@@ -191,7 +191,7 @@ async function CustomerContent({ params }: { params: PageProps<"/customers/[id]"
                   {payments.map((p) => (
                     <tr key={p.id} className={p.voided ? "text-foreground/50" : ""}>
                       <td className="whitespace-nowrap px-4 py-3">
-                        <Link href={`/payments/${p.id}`} className="font-semibold hover:text-accent hover:underline">
+                        <Link href={`/payments/${p.id}`} className="font-semibold hover:text-accent-ink hover:underline">
                           {p.paidOn}
                         </Link>
                         {p.voided && <CancelledBadge />}

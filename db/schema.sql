@@ -141,6 +141,17 @@ CREATE INDEX IF NOT EXISTS audit_log_customer_idx ON audit_log (customer_id, at 
 CREATE INDEX IF NOT EXISTS audit_log_at_idx ON audit_log (at DESC);
 
 -- ---------------------------------------------------------------------------
+-- "Notify me" sign-ups from the public launch page. One row per email (any case).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notify_signups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL CHECK (length(email) BETWEEN 3 AND 254),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS notify_signups_email_idx ON notify_signups (lower(email));
+CREATE INDEX IF NOT EXISTS notify_signups_created_idx ON notify_signups (created_at DESC);
+
+-- ---------------------------------------------------------------------------
 -- Balances. These views are the one place balances are calculated.
 -- When changing a view, only add columns at the end (Postgres can't drop or
 -- reorder view columns in place).

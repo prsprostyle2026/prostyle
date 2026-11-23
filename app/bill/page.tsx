@@ -55,8 +55,8 @@ async function AuthorizedBill({ searchParams }: { searchParams: PageProps<"/bill
         <main className="mx-auto w-full max-w-xl flex-1 px-4 py-16 text-center">
           <p className="text-lg font-semibold">{problem.message}</p>
           <p className="mt-4 flex justify-center gap-4 text-sm font-semibold">
-            {problem.link && <Link href={problem.link} className="text-accent hover:underline">Open it</Link>}
-            <Link href="/bill" className="text-accent hover:underline">Create a new bill</Link>
+            {problem.link && <Link href={problem.link} className="text-accent-ink hover:underline">Open it</Link>}
+            <Link href="/bill" className="text-accent-ink hover:underline">Create a new bill</Link>
           </p>
         </main>
       ) : (

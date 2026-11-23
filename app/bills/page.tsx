@@ -54,7 +54,7 @@ async function BillsContent({ searchParams }: { searchParams: PageProps<"/bills"
               cancelled count as sales and toward balances.
             </p>
           </div>
-          <Link href="/bill" className="rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover">
+          <Link href="/bill" className="rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground hover:bg-accent-hover">
             + Create bill
           </Link>
         </div>

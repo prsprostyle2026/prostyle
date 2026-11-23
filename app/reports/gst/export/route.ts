@@ -1,15 +1,8 @@
 import { requireUser } from "@/lib/auth";
+import { csvResponse } from "@/lib/csv";
 import { defaultPeriod, getGstReport } from "@/lib/gst-report";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-// CSV cell: quote everything, double any quotes, and neutralise spreadsheet formulas.
-function cell(v: string | number) {
-  let s = String(v);
-  if (/^[=+\-@]/.test(s) && typeof v === "string") s = `'${s}`;
-  return `"${s.replace(/"/g, '""')}"`;
-}
-const toCsv = (rows: (string | number)[][]) => rows.map((r) => r.map(cell).join(",")).join("\r\n");
 
 // GET /reports/gst/export?from=yyyy-mm-dd&to=yyyy-mm-dd&kind=invoices|rates
 export async function GET(request: Request) {
@@ -38,12 +31,5 @@ export async function GET(request: Request) {
           ),
         ];
 
-  // Leading BOM so Excel opens it as UTF-8.
-  return new Response("﻿" + toCsv(rows), {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="gst-${kind}-${from}-to-${to}.csv"`,
-      "Cache-Control": "no-store",
-    },
-  });
+  return csvResponse(rows, `gst-${kind}-${from}-to-${to}.csv`);
 }

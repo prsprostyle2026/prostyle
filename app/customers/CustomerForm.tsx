@@ -118,13 +118,13 @@ export default function CustomerForm({
             </select>
           </Field>
 
-          {errors.form && <p role="alert" className="text-sm font-medium text-accent">{errors.form}</p>}
+          {errors.form && <p role="alert" className="text-sm font-medium text-danger">{errors.form}</p>}
 
           <div className="flex gap-2 pt-1">
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-md bg-accent py-2.5 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-60"
+              className="flex-1 rounded-md bg-accent py-2.5 text-sm font-bold text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
             >
               {saving ? "Saving…" : initial ? "Save changes" : "Add customer"}
             </button>
@@ -147,7 +147,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
     <label className="block space-y-1">
       <span className="text-xs font-medium text-foreground/70">{label}</span>
       {children}
-      {error && <span className="block text-xs font-medium text-accent">{error}</span>}
+      {error && <span className="block text-xs font-medium text-danger">{error}</span>}
     </label>
   );
 }

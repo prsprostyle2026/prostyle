@@ -42,7 +42,7 @@ export default function PaymentForm({
         <button
           type="button"
           onClick={() => setAmount(String(pending))}
-          className="-mt-2 text-xs font-semibold text-accent hover:underline"
+          className="-mt-2 text-xs font-semibold text-accent-ink hover:underline"
         >
           Fill full balance ({balanceLabel(pending)})
         </button>
@@ -74,13 +74,13 @@ export default function PaymentForm({
       )}
 
       {state?.error && (
-        <p role="alert" className="text-sm font-medium text-accent">{state.error}</p>
+        <p role="alert" className="text-sm font-medium text-danger">{state.error}</p>
       )}
 
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-white hover:bg-accent-hover disabled:opacity-60"
+        className="w-full rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
       >
         {saving ? "Saving…" : "Save payment"}
       </button>

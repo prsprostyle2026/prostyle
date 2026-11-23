@@ -12,7 +12,7 @@ export default function ResetPasswordForm({ username }: { username: string }) {
 
   return (
     <details className="mt-2" open={!!state?.error}>
-      <summary className="cursor-pointer text-xs font-semibold text-foreground/60 hover:text-accent">
+      <summary className="cursor-pointer text-xs font-semibold text-foreground/60 hover:text-accent-ink">
         Set password
       </summary>
       <form action={formAction} className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
@@ -45,12 +45,12 @@ export default function ResetPasswordForm({ username }: { username: string }) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-accent px-3 py-1.5 text-xs font-bold text-white hover:bg-accent-hover disabled:opacity-60"
+          className="rounded-md bg-accent px-3 py-1.5 text-xs font-bold text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
         >
           {saving ? "Saving…" : "Set password"}
         </button>
       </form>
-      {state?.error && <p role="alert" className="mt-1 text-xs font-medium text-accent">{state.error}</p>}
+      {state?.error && <p role="alert" className="mt-1 text-xs font-medium text-danger">{state.error}</p>}
       {state?.success && (
         <p role="status" className="mt-1 text-xs font-medium text-green-700 dark:text-green-400">{state.success}</p>
       )}

@@ -32,7 +32,7 @@ async function PaymentContent({ params }: { params: PageProps<"/customers/[id]/p
       <StaffBar user={me} />
       <main className="flex flex-1 items-start justify-center px-4 py-10">
         <div className="w-full max-w-md">
-          <Link href={`/customers/${id}`} className="text-sm font-semibold text-foreground/60 hover:text-accent">
+          <Link href={`/customers/${id}`} className="text-sm font-semibold text-foreground/60 hover:text-accent-ink">
             ← {customer.name}
           </Link>
           <div className="mt-2 rounded-2xl border border-foreground/10 bg-background p-6 shadow-xl sm:p-8">
@@ -43,7 +43,7 @@ async function PaymentContent({ params }: { params: PageProps<"/customers/[id]/p
             </p>
             <div className="mt-4 flex items-baseline justify-between rounded-md bg-foreground/5 px-3 py-2 text-sm">
               <span>Pending balance now</span>
-              <span className={`font-bold ${customer.pending > 0 ? "text-accent" : ""}`}>
+              <span className={`font-bold ${customer.pending > 0 ? "text-accent-ink" : ""}`}>
                 {balanceLabel(customer.pending)}
               </span>
             </div>

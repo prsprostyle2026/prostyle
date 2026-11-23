@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import ContactDetails from "./ContactDetails";
 import Logo from "./Logo";
 
 // Placeholder links ("#") until these pages and accounts exist.
@@ -54,21 +55,23 @@ const SOCIALS: { label: string; href: string; icon: ReactNode }[] = [
 
 export default function Footer() {
   return (
-    <footer className="print:hidden border-t border-foreground/10 bg-foreground/3">
+    <footer className="print:hidden border-t-2 border-gold bg-white text-neutral-900">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <Logo />
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-foreground/70">
+          <Logo className="h-12 w-auto sm:h-14" />
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-600">
             Performance sportswear designed to move with you, from training
             sessions to game day.
           </p>
+          <h3 className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-gold-dark">Contact us</h3>
+          <ContactDetails className="mt-3" />
           <ul className="mt-6 flex gap-3">
             {SOCIALS.map((s) => (
               <li key={s.label}>
                 <a
                   href={s.href}
                   aria-label={s.label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-foreground/15 text-foreground/70 transition-colors hover:border-accent hover:bg-accent hover:text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-300 text-neutral-600 transition-colors hover:border-gold hover:bg-gold hover:text-black"
                 >
                   <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
                     {s.icon}
@@ -82,15 +85,15 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:col-span-1 lg:col-span-3">
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <h3 className="text-xs font-bold uppercase tracking-[0.2em]">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-gold-dark">
                 {col.title}
               </h3>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((label) => (
                   <li key={label}>
                     <Link
-                      href="#"
-                      className="text-sm text-foreground/70 transition-colors hover:text-accent"
+                      href={label === "Contact" ? "/#contact" : "#"}
+                      className="text-sm text-neutral-600 transition-colors hover:text-gold-dark"
                     >
                       {label}
                     </Link>
@@ -102,12 +105,12 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-foreground/10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 text-xs text-foreground/60 sm:flex-row sm:px-6">
+      <div className="bg-neutral-950">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 text-xs text-neutral-400 sm:flex-row sm:px-6">
           <p>&copy; 2026 Prostyle Sports Wear. All rights reserved.</p>
           <ul className="flex gap-5">
-            <li><Link href="#" className="hover:text-foreground">Privacy Policy</Link></li>
-            <li><Link href="#" className="hover:text-foreground">Terms of Service</Link></li>
+            <li><Link href="#" className="hover:text-gold-light">Privacy Policy</Link></li>
+            <li><Link href="#" className="hover:text-gold-light">Terms of Service</Link></li>
           </ul>
         </div>
       </div>

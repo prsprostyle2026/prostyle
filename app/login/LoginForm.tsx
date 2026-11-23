@@ -28,7 +28,7 @@ export default function LoginForm() {
       </label>
 
       {state?.error && (
-        <p role="alert" className="text-sm font-medium text-accent">
+        <p role="alert" className="text-sm font-medium text-danger">
           {state.error}
         </p>
       )}
@@ -36,7 +36,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-white hover:bg-accent-hover disabled:opacity-60"
+        className="w-full rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>
