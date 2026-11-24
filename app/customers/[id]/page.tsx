@@ -8,6 +8,7 @@ import { balanceLabel, rupees } from "@/lib/format";
 import StaffBar from "../../components/StaffBar";
 import StatTiles from "../../components/StatTiles";
 import BillItems, { CancelledBadge, DocTypeBadge } from "../../bills/BillItems";
+import OpeningBalanceForm from "./OpeningBalanceForm";
 
 export const metadata: Metadata = {
   title: "Customer — Prostyle Sports Wear",
@@ -41,7 +42,10 @@ async function CustomerContent({ params }: { params: PageProps<"/customers/[id]"
     },
     { label: "Paid on invoices & bills", value: rupees(customer.paidOnBills) },
     { label: "Separate payments", value: rupees(customer.payments) },
+    ...(customer.openingBalance !== 0 ? [{ label: "Opening balance (included above)", value: balanceLabel(customer.openingBalance) }] : []),
   ];
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  const openingMax = customer.firstEntryDate && customer.firstEntryDate < today ? customer.firstEntryDate : today;
 
   return (
     <>
@@ -82,6 +86,16 @@ async function CustomerContent({ params }: { params: PageProps<"/customers/[id]"
         </div>
 
         <StatTiles tiles={tiles} />
+
+        <Section title="Opening balance">
+          <OpeningBalanceForm
+            customerId={id}
+            amount={customer.openingBalance}
+            date={customer.openingDate}
+            note={customer.openingNote}
+            maxDate={openingMax}
+          />
+        </Section>
 
         <Section title={`Documents (${bills.length})`}>
           {bills.length === 0 ? (

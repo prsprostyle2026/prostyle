@@ -25,6 +25,10 @@ export type CustomerSummary = {
   billCount: number; // invoices + customer bills
   invoiceCount: number;
   customerBillCount: number;
+  openingBalance: number; // + owes us, - credit
+  openingDate: string | null; // yyyy-mm-dd
+  openingNote: string;
+  firstEntryDate: string | null; // earliest bill or payment; the opening balance must be dated on or before it
 };
 
 export async function getCustomerSummary(id: string): Promise<CustomerSummary | null> {
@@ -35,7 +39,11 @@ export async function getCustomerSummary(id: string): Promise<CustomerSummary | 
             c.updated_by AS "updatedBy", ${IST("c.updated_at")} AS "updatedAt",
             b.billed::float8 AS billed, b.paid_on_bills::float8 AS "paidOnBills",
             b.payments::float8 AS payments, b.pending::float8 AS pending, b.bill_count AS "billCount",
-            b.invoice_count AS "invoiceCount", b.customer_bill_count AS "customerBillCount"
+            b.invoice_count AS "invoiceCount", b.customer_bill_count AS "customerBillCount",
+            c.opening_balance::float8 AS "openingBalance", to_char(c.opening_balance_date, 'YYYY-MM-DD') AS "openingDate",
+            c.opening_balance_note AS "openingNote",
+            to_char((SELECT min(entry_date) FROM customer_ledger_entries e WHERE e.customer_id = c.id AND e.kind <> 'opening'),
+                    'YYYY-MM-DD') AS "firstEntryDate"
      FROM customers c JOIN customer_balances b ON b.customer_id = c.id
      WHERE c.id = $1`,
     [id],

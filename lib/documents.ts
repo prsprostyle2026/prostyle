@@ -106,7 +106,7 @@ export async function getPendingBalance(customerId: string): Promise<number> {
 }
 
 export type LedgerRow = {
-  kind: "bill" | "payment";
+  kind: "bill" | "payment" | "opening";
   entryId: string;
   docType: DocType | null;
   ref: string;

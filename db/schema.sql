@@ -19,6 +19,12 @@ CREATE TABLE IF NOT EXISTS customers (
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS created_by text NOT NULL DEFAULT '';
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS updated_by text NOT NULL DEFAULT '';
 
+-- Balance carried over from before the app (e.g. an old ledger book): positive = the customer
+-- owes us, negative = we hold their advance/credit. It is the first entry on their account.
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS opening_balance numeric(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS opening_balance_date date;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS opening_balance_note text NOT NULL DEFAULT '';
+
 -- Same name (any case) = same customer.
 CREATE UNIQUE INDEX IF NOT EXISTS customers_name_lower_idx ON customers (lower(name));
 
@@ -168,6 +174,8 @@ CREATE INDEX IF NOT EXISTS notify_signups_created_idx ON notify_signups (created
 -- ---------------------------------------------------------------------------
 
 -- Every entry on a customer's account: debit = billed, credit = paid.
+-- The opening balance (if any) comes first: created_at '-infinity' sorts it before anything
+-- else on its date. entry_id is the customer's id. Casts keep the column types unchanged.
 CREATE OR REPLACE VIEW customer_ledger_entries AS
 SELECT customer_id, 'bill'::text AS kind, id AS entry_id, doc_type, number AS ref,
        bill_date AS entry_date, created_at, total AS debit, paid AS credit, payment_note AS note
@@ -176,7 +184,13 @@ WHERE doc_type IN ('Invoice', 'Customer Bill') AND voided_at IS NULL
 UNION ALL
 SELECT customer_id, 'payment'::text, id, NULL, method, paid_on, created_at, 0, amount, note
 FROM customer_payments
-WHERE voided_at IS NULL;
+WHERE voided_at IS NULL
+UNION ALL
+SELECT id, 'opening'::text, id, NULL, 'Opening balance', coalesce(opening_balance_date, created_at::date),
+       '-infinity'::timestamptz, greatest(opening_balance, 0)::numeric,
+       greatest(-opening_balance, 0)::numeric(12,2), opening_balance_note
+FROM customers
+WHERE opening_balance <> 0;
 
 -- Same entries with the running balance after each one (positive = customer owes us).
 CREATE OR REPLACE VIEW customer_ledger AS
@@ -186,16 +200,18 @@ SELECT e.*,
                                      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS balance
 FROM customer_ledger_entries e;
 
--- Totals per customer: pending = (Invoices + Customer Bills) - paid on them - separate payments.
+-- Totals per customer:
+-- pending = opening balance + (Invoices + Customer Bills) - paid on them - separate payments.
 CREATE OR REPLACE VIEW customer_balances AS
 SELECT c.id AS customer_id,
        coalesce(b.billed, 0)        AS billed,
        coalesce(b.paid_on_bills, 0) AS paid_on_bills,
        coalesce(p.payments, 0)      AS payments,
-       coalesce(b.billed, 0) - coalesce(b.paid_on_bills, 0) - coalesce(p.payments, 0) AS pending,
+       c.opening_balance + coalesce(b.billed, 0) - coalesce(b.paid_on_bills, 0) - coalesce(p.payments, 0) AS pending,
        coalesce(b.bill_count, 0)    AS bill_count,
        coalesce(b.invoice_count, 0) AS invoice_count,
-       coalesce(b.customer_bill_count, 0) AS customer_bill_count
+       coalesce(b.customer_bill_count, 0) AS customer_bill_count,
+       c.opening_balance            AS opening_balance
 FROM customers c
 LEFT JOIN (SELECT customer_id, sum(total) AS billed, sum(paid) AS paid_on_bills, count(*)::int AS bill_count,
                   (count(*) FILTER (WHERE doc_type = 'Invoice'))::int AS invoice_count,

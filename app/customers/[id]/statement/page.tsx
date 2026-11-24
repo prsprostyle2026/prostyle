@@ -107,7 +107,7 @@ async function StatementContent({
               <tbody>
                 <tr className="border-b border-neutral-200">
                   <td className="py-1.5 pl-2">{displayDate(from)}</td>
-                  <td className="py-1.5 font-semibold">Opening balance</td>
+                  <td className="py-1.5 font-semibold">Balance brought forward</td>
                   <td /><td />
                   <td className="py-1.5 pr-2 text-right font-semibold">{drcr(opening)}</td>
                 </tr>
@@ -115,7 +115,12 @@ async function StatementContent({
                   <tr key={e.entryId} className="border-b border-neutral-200 align-top">
                     <td className="py-1.5 pl-2 whitespace-nowrap">{displayDate(e.date)}</td>
                     <td className="py-1.5">
-                      {e.kind === "bill" ? (
+                      {e.kind === "opening" ? (
+                        <>
+                          <span className="font-semibold">Opening balance</span> (from before this account)
+                          {e.note && <span className="block text-[11px] text-neutral-500">{e.note}</span>}
+                        </>
+                      ) : e.kind === "bill" ? (
                         <>
                           {e.docType} <span className="font-semibold">{e.ref}</span>
                           {e.credit > 0 && <span className="block text-[11px] text-neutral-500">Paid at billing{e.note ? ` (${e.note})` : ""}</span>}
@@ -158,7 +163,7 @@ async function StatementContent({
               </div>
             </div>
             <p className="mt-6 text-[11px] text-neutral-500">
-              Includes invoices, customer bills and payments. Cancelled entries, quotations and proforma invoices are not included.
+              Includes the opening balance, invoices, customer bills and payments. Cancelled entries, quotations and proforma invoices are not included.
             </p>
           </div>
         </FitToWidth>
