@@ -26,6 +26,8 @@ export type DocRecord = {
   total: number;
   paid: number;
   paymentNote: string;
+  paymentMethod: string | null; // how the paid amount was paid
+  receivedBy: string | null; // staff-only; not shown on the document
   business: Business;
   signature: string; // resolved: default stamp path, "" for none, or a data URL
   voided: boolean;
@@ -55,7 +57,7 @@ export async function getDocument(id: string): Promise<DocRecord | null> {
     `SELECT b.id, b.doc_type AS "docType", b.number, b.financial_year AS "financialYear",
             to_char(b.bill_date, 'YYYY-MM-DD') AS date, coalesce(to_char(b.due_date, 'YYYY-MM-DD'), '') AS "dueDate",
             b.customer_id AS "customerId", b.customer, b.items, b.apply_gst AS "applyGst", b.round_off AS "roundOff",
-            b.total::float8 AS total, b.paid::float8 AS paid, b.payment_note AS "paymentNote",
+            b.total::float8 AS total, b.paid::float8 AS paid, b.payment_note AS "paymentNote", b.received_by AS "receivedBy", b.payment_method AS "paymentMethod",
             b.business, b.signature,
             b.voided_at IS NOT NULL AS voided, b.void_reason AS "voidReason", b.voided_by AS "voidedBy",
             ${IST("b.voided_at")} AS "voidedAt",

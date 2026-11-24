@@ -86,6 +86,8 @@ function toInitial(doc: DocRecord, mode: "edit" | "convert", docType: DocType, b
     roundOff: doc.roundOff,
     paid: doc.paid,
     paymentNote: doc.paymentNote,
+    paymentMethod: doc.paymentMethod ?? "",
+    receivedBy: doc.receivedBy ?? "",
     business: doc.business,
     signature: doc.signature,
     balanceBefore,

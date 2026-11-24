@@ -6,6 +6,8 @@ import { requireUser } from "@/lib/auth";
 import { query, withTransaction, type PoolClient } from "@/lib/db";
 import { isUuid } from "@/lib/documents";
 import { rupees } from "@/lib/format";
+import { isPaymentMethod } from "@/lib/payment-methods";
+import { isReceiver } from "@/lib/receivers";
 import { computeTotals, type DocItem } from "./calc";
 import {
   DEFAULT_SIGNATURE,
@@ -46,6 +48,8 @@ export type DocInput = {
   roundOff: boolean;
   paid: number;
   paymentNote: string;
+  paymentMethod: string; // Cash, UPI...; required when paid > 0, ignored otherwise
+  receivedBy: string; // who took the money; required when paid > 0, ignored otherwise
   business: Business;
   signature: string; // default stamp path, "" for none, or an image data URL
 };
@@ -71,6 +75,8 @@ type Clean = {
   roundOff: boolean;
   paid: number;
   paymentNote: string;
+  paymentMethod: string | null;
+  receivedBy: string | null;
   business: Business;
   signature: string | null; // null = default stamp
   taxable: number;
@@ -96,6 +102,10 @@ function clean(input: DocInput): Clean | Failure {
   if (!items.length || items.length > 500) return { ok: false, error: "Add at least one item." };
   const paid = num(input.paid);
   if (paid === null) return { ok: false, error: "The amount paid is not a valid number." };
+  const paymentMethod = paid > 0 ? input.paymentMethod : null;
+  if (paid > 0 && !isPaymentMethod(paymentMethod)) return { ok: false, error: "Choose the payment type." };
+  const receivedBy = paid > 0 ? input.receivedBy : null;
+  if (paid > 0 && !isReceiver(receivedBy)) return { ok: false, error: "Choose who received the payment." };
 
   const c = input.customer ?? ({} as DocCustomer);
   const customer: DocCustomer = {
@@ -135,6 +145,8 @@ function clean(input: DocInput): Clean | Failure {
     roundOff,
     paid,
     paymentNote: str(input.paymentNote, 200),
+    paymentMethod,
+    receivedBy,
     business,
     signature,
     taxable: t.taxableTotal,
@@ -200,12 +212,12 @@ export async function createDocument(input: DocInput, convertFromId?: string | n
     const { rows } = await db.query<{ id: string }>(
       `INSERT INTO bills (doc_type, number, financial_year, seq, customer_id, bill_date, due_date, customer, items,
                           apply_gst, round_off, taxable, tax, total, paid, previous_balance, payment_note,
-                          business, signature, converted_from, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING id`,
+                          business, signature, converted_from, created_by, received_by, payment_method)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING id`,
       [
         d.docType, number, fy, seq, d.customerId, d.date, d.dueDate, JSON.stringify(d.customer), JSON.stringify(d.items),
         d.applyGst, d.roundOff, d.taxable, d.tax, d.total, d.paid, Number(previousBalance.rows[0]?.pending ?? 0),
-        d.paymentNote, JSON.stringify(d.business), d.signature, source?.id ?? null, actor,
+        d.paymentNote, JSON.stringify(d.business), d.signature, source?.id ?? null, actor, d.receivedBy, d.paymentMethod,
       ],
     );
     await writeAudit(db, {
@@ -214,7 +226,7 @@ export async function createDocument(input: DocInput, convertFromId?: string | n
       entityId: rows[0].id,
       action: source ? "converted" : "created",
       summary:
-        `${d.docType} ${number} for ${rupees(d.total)}${d.paid > 0 ? `, paid ${rupees(d.paid)}` : ""}` +
+        `${d.docType} ${number} for ${rupees(d.total)}${d.paid > 0 ? `, paid ${rupees(d.paid)} by ${d.paymentMethod} (received by ${d.receivedBy})` : ""}` +
         (source ? ` (converted from ${source.doc_type} ${source.number})` : ""),
       actor,
     });
@@ -224,7 +236,7 @@ export async function createDocument(input: DocInput, convertFromId?: string | n
 
 // What the activity history shows when a document is edited.
 function auditView(d: {
-  date: string; dueDate: string | null; total: number; paid: number; paymentNote: string; applyGst: boolean;
+  date: string; dueDate: string | null; total: number; paid: number; paymentNote: string; receivedBy: string | null; paymentMethod: string | null; applyGst: boolean;
   items: DocItem[]; customer: DocCustomer;
 }) {
   return {
@@ -233,6 +245,8 @@ function auditView(d: {
     total: rupees(d.total),
     paid: rupees(d.paid),
     paymentNote: d.paymentNote,
+    paymentMethod: d.paymentMethod ?? "",
+    receivedBy: d.receivedBy ?? "",
     gst: d.applyGst ? "applied" : "not applied",
     items: d.items.map((i) => `${i.name} ${i.qty}×${i.rate}${i.gst ? ` @${i.gst}%` : ""}`).join("; "),
     customerName: d.customer.name,
@@ -241,7 +255,7 @@ function auditView(d: {
   };
 }
 const AUDIT_LABELS = {
-  date: "Date", dueDate: "Due date", total: "Total", paid: "Paid", paymentNote: "Payment note", gst: "GST",
+  date: "Date", dueDate: "Due date", total: "Total", paid: "Paid", paymentNote: "Payment note", paymentMethod: "Payment type", receivedBy: "Received by", gst: "GST",
   items: "Items", customerName: "Customer name", customerDetails: "Customer details", placeOfSupply: "Place of supply",
 } as const;
 
@@ -256,11 +270,11 @@ export async function updateDocument(id: string, input: DocInput): Promise<SaveD
   return withTransaction(async (db): Promise<SaveDocResult> => {
     const { rows } = await db.query<{
       number: string; doc_type: DocType; customer_id: string; financial_year: string | null; voided_at: Date | null;
-      date: string; due_date: string | null; total: string; paid: string; payment_note: string; apply_gst: boolean;
+      date: string; due_date: string | null; total: string; paid: string; payment_note: string; received_by: string | null; payment_method: string | null; apply_gst: boolean;
       items: DocItem[]; customer: DocCustomer;
     }>(
       `SELECT number, doc_type, customer_id, financial_year, voided_at, to_char(bill_date, 'YYYY-MM-DD') AS date,
-              to_char(due_date, 'YYYY-MM-DD') AS due_date, total, paid, payment_note, apply_gst, items, customer
+              to_char(due_date, 'YYYY-MM-DD') AS due_date, total, paid, payment_note, received_by, payment_method, apply_gst, items, customer
        FROM bills WHERE id = $1 FOR UPDATE`,
       [id],
     );
@@ -278,15 +292,15 @@ export async function updateDocument(id: string, input: DocInput): Promise<SaveD
     await db.query(
       `UPDATE bills SET bill_date = $2, due_date = $3, customer = $4, items = $5, apply_gst = $6, round_off = $7,
          taxable = $8, tax = $9, total = $10, paid = $11, payment_note = $12, business = $13, signature = $14,
-         updated_by = $15, updated_at = now()
+         updated_by = $15, received_by = $16, payment_method = $17, updated_at = now()
        WHERE id = $1`,
       [
         id, d.date, d.dueDate, JSON.stringify(d.customer), JSON.stringify(d.items), d.applyGst, d.roundOff,
-        d.taxable, d.tax, d.total, d.paid, d.paymentNote, JSON.stringify(d.business), d.signature, actor,
+        d.taxable, d.tax, d.total, d.paid, d.paymentNote, JSON.stringify(d.business), d.signature, actor, d.receivedBy, d.paymentMethod,
       ],
     );
     const changes = diff(
-      auditView({ ...old, dueDate: old.due_date, total: Number(old.total), paid: Number(old.paid), paymentNote: old.payment_note, applyGst: old.apply_gst }),
+      auditView({ ...old, dueDate: old.due_date, total: Number(old.total), paid: Number(old.paid), paymentNote: old.payment_note, receivedBy: old.received_by, paymentMethod: old.payment_method, applyGst: old.apply_gst }),
       auditView(d),
       AUDIT_LABELS,
     );

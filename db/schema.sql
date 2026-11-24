@@ -96,6 +96,12 @@ ALTER TABLE bills ADD COLUMN IF NOT EXISTS converted_from uuid REFERENCES bills(
 CREATE INDEX IF NOT EXISTS bills_converted_from_idx ON bills (converted_from);
 CREATE INDEX IF NOT EXISTS bills_date_idx ON bills (bill_date);
 
+-- Who took the money paid on this document (PRS, Suresh, Pavan, Rambabu). Null when nothing
+-- was paid. Used by the "Received by" report only; never printed.
+ALTER TABLE bills ADD COLUMN IF NOT EXISTS received_by text;
+-- How the money paid on this document was paid (Cash, UPI, Card...). Null when nothing was paid.
+ALTER TABLE bills ADD COLUMN IF NOT EXISTS payment_method text;
+
 -- Last number used per document type and financial year.
 CREATE TABLE IF NOT EXISTS doc_counters (
   doc_type       text NOT NULL,
@@ -121,6 +127,9 @@ CREATE INDEX IF NOT EXISTS customer_payments_customer_idx ON customer_payments (
 ALTER TABLE customer_payments ADD COLUMN IF NOT EXISTS voided_at timestamptz;
 ALTER TABLE customer_payments ADD COLUMN IF NOT EXISTS voided_by text;
 ALTER TABLE customer_payments ADD COLUMN IF NOT EXISTS void_reason text;
+-- Who took the money (PRS, Suresh, Pavan, Rambabu). Null for payments recorded before this existed.
+ALTER TABLE customer_payments ADD COLUMN IF NOT EXISTS received_by text;
+CREATE INDEX IF NOT EXISTS customer_payments_paid_on_idx ON customer_payments (paid_on);
 
 -- ---------------------------------------------------------------------------
 -- Audit log: who did what to a customer's records, and when. No foreign key,
@@ -139,6 +148,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 CREATE INDEX IF NOT EXISTS audit_log_customer_idx ON audit_log (customer_id, at DESC);
 CREATE INDEX IF NOT EXISTS audit_log_at_idx ON audit_log (at DESC);
+CREATE INDEX IF NOT EXISTS audit_log_entity_idx ON audit_log (entity, entity_id);
 
 -- ---------------------------------------------------------------------------
 -- "Notify me" sign-ups from the public launch page. One row per email (any case).

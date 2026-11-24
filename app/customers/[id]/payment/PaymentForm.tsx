@@ -2,12 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { balanceLabel } from "@/lib/format";
+import { PAYMENT_METHODS } from "@/lib/payment-methods";
+import { RECEIVERS } from "@/lib/receivers";
 import { recordPayment } from "./actions";
 
 const inputCls =
   "w-full rounded-md border border-foreground/15 bg-background px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
-
-const METHODS = ["Cash", "UPI", "Card", "Bank transfer", "Cheque", "Other"];
 
 export default function PaymentForm({
   customerId,
@@ -55,12 +55,23 @@ export default function PaymentForm({
         <label className="block space-y-1">
           <span className="text-xs font-medium text-foreground/70">Method</span>
           <select name="method" required defaultValue={state?.values?.method ?? "Cash"} className={inputCls}>
-            {METHODS.map((m) => (
+            {PAYMENT_METHODS.map((m) => (
               <option key={m}>{m}</option>
             ))}
           </select>
         </label>
       </div>
+      <label className="block space-y-1">
+        <span className="text-xs font-medium text-foreground/70">Received by</span>
+        <select name="receivedBy" required defaultValue={state?.values?.receivedBy ?? ""} className={inputCls}>
+          <option value="" disabled>
+            Choose…
+          </option>
+          {RECEIVERS.map((r) => (
+            <option key={r}>{r}</option>
+          ))}
+        </select>
+      </label>
       <label className="block space-y-1">
         <span className="text-xs font-medium text-foreground/70">Note (optional)</span>
         <input name="note" maxLength={500} placeholder="e.g. UPI ref 4321" defaultValue={state?.values?.note} className={inputCls} />

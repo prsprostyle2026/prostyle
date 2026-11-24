@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/bills", label: "Bills" },
   { href: "/customers", label: "Customers" },
   { href: "/reports/gst", label: "GST report" },
+  { href: "/reports/received", label: "Received by" },
   { href: "/reports/signups", label: "Sign-ups" },
   { href: "/staff", label: "Staff" },
   { href: "/account/password", label: "Change password" },

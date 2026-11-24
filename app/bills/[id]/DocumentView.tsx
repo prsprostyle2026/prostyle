@@ -230,7 +230,7 @@ export default function DocumentView({
             applyGst: doc.applyGst,
             roundOff: doc.roundOff,
             paid: doc.paid,
-            paymentNote: doc.paymentNote,
+            paymentNote: [doc.paymentMethod, doc.paymentNote].filter(Boolean).join(" · "),
             previousBalance,
             signature: doc.signature,
             voidReason: doc.voided ? doc.voidReason : null,

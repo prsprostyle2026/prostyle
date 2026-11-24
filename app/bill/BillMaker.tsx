@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent, type ReactNode } from "react";
 import { balanceLabel } from "@/lib/format";
+import { PAYMENT_METHODS } from "@/lib/payment-methods";
+import { RECEIVERS } from "@/lib/receivers";
 import { createDocument, getCustomerBalance, updateDocument, type CustomerBalance, type DocInput } from "./bills";
 import { computeTotals } from "./calc";
 import CustomerPicker from "./CustomerPicker";
@@ -38,6 +40,8 @@ export type InitialDoc = {
   roundOff: boolean;
   paid: number;
   paymentNote: string;
+  paymentMethod: string; // "" when nothing was paid
+  receivedBy: string; // "" when nothing was paid
   business: Business;
   signature: string;
   balanceBefore: number; // the customer's balance before this document
@@ -85,6 +89,9 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
   const [roundOff, setRoundOff] = useState(initial?.roundOff ?? true);
   const [advance, setAdvance] = useState(initial?.paid ? String(initial.paid) : "");
   const [advanceNote, setAdvanceNote] = useState(initial?.paymentNote ?? "");
+  // New documents start on Cash; an older saved document without a type must be chosen.
+  const [paymentMethod, setPaymentMethod] = useState(initial ? initial.paymentMethod : "Cash");
+  const [receivedBy, setReceivedBy] = useState(initial?.receivedBy ?? "");
   const [business, setBusiness] = useState<Business>(initial?.business ?? DEFAULT_BUSINESS);
   const [signature, setSignature] = useState(initial?.signature ?? DEFAULT_SIGNATURE);
   const [signatureError, setSignatureError] = useState("");
@@ -165,6 +172,8 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
       roundOff,
       paid: advancePaid,
       paymentNote: advanceNote,
+      paymentMethod,
+      receivedBy,
       business,
       signature,
     };
@@ -186,7 +195,10 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
   }
 
   const title = editing ? `Edit ${initial!.sourceLabel}` : converting ? `Convert ${initial!.sourceLabel}` : "Create Bill";
-  const canSave = !!customerId && t.rows.length > 0 && !saving && !fyMismatch && (!isBilling || !!balance || !!balanceError);
+  // Money taken on this document must say who took it.
+  const needsReceiver = advancePaid > 0 && !receivedBy;
+  const needsMethod = advancePaid > 0 && !paymentMethod;
+  const canSave = !!customerId && t.rows.length > 0 && !saving && !fyMismatch && !needsReceiver && !needsMethod && (!isBilling || !!balance || !!balanceError);
 
   return (
     // Form only. After saving, the document opens with Share and Print (see /bills/[id]).
@@ -428,8 +440,34 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
             <Field label={isCustomerBill ? "Amount paid now (₹)" : "Advance paid (₹)"}>
               <input className={inputCls} type="number" min="0" step="0.01" placeholder="0.00" value={advance} onChange={(e) => setAdvance(e.target.value)} />
             </Field>
+            <Field label="Payment type">
+              <select
+                className={inputCls}
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                aria-invalid={needsMethod || undefined}
+              >
+                <option value="">{advancePaid > 0 ? "Choose…" : "—"}</option>
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m}>{m}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Received by">
+              <select
+                className={inputCls}
+                value={receivedBy}
+                onChange={(e) => setReceivedBy(e.target.value)}
+                aria-invalid={needsReceiver || undefined}
+              >
+                <option value="">{advancePaid > 0 ? "Choose…" : "— (nothing paid)"}</option>
+                {RECEIVERS.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+            </Field>
             <Field label="Payment note (optional)">
-              <input className={inputCls} placeholder="e.g. UPI, 10 Nov" value={advanceNote} onChange={(e) => setAdvanceNote(e.target.value)} />
+              <input className={inputCls} placeholder="e.g. UPI ref 4321" value={advanceNote} onChange={(e) => setAdvanceNote(e.target.value)} />
             </Field>
           </div>
           <dl className="space-y-1 rounded-md bg-foreground/5 px-3 py-2 text-sm">
@@ -454,6 +492,11 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
               </div>
             )}
           </dl>
+          {(needsMethod || needsReceiver) && (
+            <p className="text-xs font-semibold text-danger">
+              Choose {[needsMethod && "the payment type", needsReceiver && "who received the payment"].filter(Boolean).join(" and ")} before saving.
+            </p>
+          )}
           {!isBilling && advancePaid > 0 && (
             <p className="text-xs text-foreground/60">
               An advance on a {docType.toLowerCase()} isn&apos;t added to the customer&apos;s account until it&apos;s converted into
