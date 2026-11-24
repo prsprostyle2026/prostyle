@@ -10,7 +10,8 @@ export async function sheetToPdf(sheet: HTMLElement, fileName: string): Promise<
   // Capture the sheet itself at full size. html-to-image renders a copy of the element,
   // so the on-screen fit-to-phone scaling of its parent doesn't affect the result.
   const canvas = await toCanvas(sheet, {
-    pixelRatio: 2,
+    // 3x keeps the payment QR crisp enough to scan from the PDF or a printout.
+    pixelRatio: 3,
     backgroundColor: "#ffffff",
     cacheBust: true,
     style: { boxShadow: "none", margin: "0" },

@@ -1,6 +1,7 @@
 // The printed A4 document. Used for the live preview while editing and for reprinting
 // saved documents, so both always look the same.
 import { amountInWords } from "./amountInWords";
+import Image from "next/image";
 import SheetLogo from "./SheetLogo";
 import { computeTotals, type DocItem } from "./calc";
 import type { Business, DocCustomer, DocType } from "./docTypes";
@@ -215,6 +216,21 @@ export default function BillSheet({ doc }: { doc: SheetData }) {
             <dt>IFSC Code:</dt><dd className="font-semibold">{business.ifsc}</dd>
             <dt>Branch:</dt><dd className="font-semibold">{business.branch}</dd>
           </dl>
+        </div>
+        {/* Payment QR (HDFC SmartHub: UPI and cards) on every document type. Vector (SVG), rebuilt from the bank QR's
+            data, so it stays sharp in print and in the shared PDF. */}
+        <div className="flex shrink-0 flex-col items-center text-center text-[11px]">
+          <Image
+            src="/prostyle-qr.svg"
+            alt="Scan to pay Prostyle Sports Wear"
+            width={65}
+            height={65}
+            loading="eager"
+            unoptimized
+            className="h-[36mm] w-[36mm]"
+          />
+          <p className="font-semibold">Scan &amp; pay</p>
+          <p className="text-neutral-600">UPI / Cards</p>
         </div>
         <div className="flex w-52 shrink-0 flex-col items-center text-[12px]">
           <p className="text-neutral-600">For {business.name}</p>
