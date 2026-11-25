@@ -55,6 +55,13 @@ body {
     size: A4;
     margin: 0;
   }
+  /* Print in light colours even when the screen is in dark mode (size guide, reports). */
+  :root {
+    --background: #ffffff;
+    --foreground: #141414;
+    --accent: #d4a12a;
+    --accent-ink: #8a6508;
+  }
   body {
     background: #fff;
   }

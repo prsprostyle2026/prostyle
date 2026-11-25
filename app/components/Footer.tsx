@@ -92,7 +92,7 @@ export default function Footer() {
                 {col.links.map((label) => (
                   <li key={label}>
                     <Link
-                      href={label === "Contact" ? "/#contact" : "#"}
+                      href={label === "Contact" ? "/#contact" : label === "Size Guide" ? "/size-guide" : "#"}
                       className="text-sm text-neutral-600 transition-colors hover:text-gold-dark"
                     >
                       {label}
