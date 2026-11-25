@@ -168,6 +168,30 @@ CREATE UNIQUE INDEX IF NOT EXISTS notify_signups_email_idx ON notify_signups (lo
 CREATE INDEX IF NOT EXISTS notify_signups_created_idx ON notify_signups (created_at DESC);
 
 -- ---------------------------------------------------------------------------
+-- Wholesale enquiries from the public /home page. Staff follow each one up:
+-- who attended it, the result, and a note. Every change goes to audit_log
+-- (entity 'enquiry').
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS enquiries (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         text NOT NULL CHECK (length(name) BETWEEN 1 AND 100),
+  phone        text NOT NULL CHECK (length(phone) BETWEEN 10 AND 20),
+  email        text NOT NULL DEFAULT '' CHECK (length(email) <= 254),
+  organisation text NOT NULL DEFAULT '' CHECK (length(organisation) <= 120),
+  product      text NOT NULL DEFAULT '' CHECK (length(product) <= 80),
+  quantity     integer CHECK (quantity IS NULL OR quantity BETWEEN 1 AND 1000000),
+  message      text NOT NULL DEFAULT '' CHECK (length(message) <= 2000),
+  attended_by  text,                 -- one of lib/receivers.ts; null = not attended yet
+  attended_at  timestamptz,
+  result       text,                 -- one of ENQUIRY_RESULTS in lib/enquiries.ts
+  result_note  text NOT NULL DEFAULT '' CHECK (length(result_note) <= 1000),
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  updated_by   text
+);
+CREATE INDEX IF NOT EXISTS enquiries_created_idx ON enquiries (created_at DESC);
+
+-- ---------------------------------------------------------------------------
 -- Balances. These views are the one place balances are calculated.
 -- When changing a view, only add columns at the end (Postgres can't drop or
 -- reorder view columns in place).

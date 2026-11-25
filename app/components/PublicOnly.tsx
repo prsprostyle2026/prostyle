@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 // Staff pages have their own top bar (StaffBar), so the shop's marketing header and
 // footer are hidden there — on a phone they would take up most of the screen.
-const STAFF_PREFIXES = ["/bill", "/customers", "/payments", "/reports", "/staff", "/account"];
+const STAFF_PREFIXES = ["/bill", "/customers", "/enquiries", "/payments", "/reports", "/staff", "/account"];
 
 export const isStaffPath = (path: string) =>
   STAFF_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`) || (p === "/bill" && path.startsWith("/bills")));

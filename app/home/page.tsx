@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ContactDetails from "../components/ContactDetails";
+import EnquiryForm from "../components/EnquiryForm";
 import SizeChart, { HowToMeasure } from "../components/SizeChart";
 import { BUYERS, FABRICS, PRODUCTS } from "@/lib/catalog";
 import { CONTACT_PHONES, telHref } from "@/lib/contact";
@@ -131,7 +132,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
           <SectionHeading id="fabrics-heading" kicker="Choose your fabric" title="Fabrics we print on">
             Sublimation bonds permanently with polyester, so all our fabrics are polyester or polyester blends.
-            Pick the one that suits your sport and budget.
+            Pick the one that suits your sport and budget. Every fabric is available for cricket jerseys too.
           </SectionHeading>
           <div className="mt-10 overflow-x-auto rounded-2xl border border-foreground/10 bg-background">
             <table className="w-full min-w-xl text-left text-sm">
@@ -216,7 +217,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-4 text-foreground/70">
               Tell us the product, fabric, quantity, sizes and your design. We&apos;ll reply with a mock-up and
-              price.
+              price. Call us, or send the form and we&apos;ll call you back.
             </p>
             <a
               href={telHref(CONTACT_PHONES[0])}
@@ -224,10 +225,8 @@ export default function HomePage() {
             >
               Call us now
             </a>
-          </div>
-          <div className="space-y-6">
-            <ContactDetails tone="page" />
-            <div className="text-sm">
+            <ContactDetails tone="page" className="mt-8" />
+            <div className="mt-6 text-sm">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-ink">Factory</p>
               <address className="mt-2 not-italic text-foreground/80">
                 CN 83/131, Ground Floor, Ramnaikanahalli, Kathriguppe Road,
@@ -236,6 +235,7 @@ export default function HomePage() {
               </address>
             </div>
           </div>
+          <EnquiryForm products={PRODUCTS.map((p) => p.name)} />
         </div>
       </section>
     </main>

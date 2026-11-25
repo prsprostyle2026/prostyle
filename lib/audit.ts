@@ -3,7 +3,7 @@ import type { PoolClient } from "./db";
 
 export type AuditEntry = {
   customerId: string | null;
-  entity: "customer" | "bill" | "payment";
+  entity: "customer" | "bill" | "payment" | "enquiry";
   entityId: string;
   action: "created" | "updated" | "deleted" | "voided" | "converted";
   summary: string;

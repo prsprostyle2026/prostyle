@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/bill", label: "Create bill" },
   { href: "/bills", label: "Bills" },
   { href: "/customers", label: "Customers" },
+  { href: "/enquiries", label: "Enquiries" },
   { href: "/reports/gst", label: "GST report" },
   { href: "/reports/received", label: "Received by" },
   { href: "/reports/signups", label: "Sign-ups" },
@@ -43,11 +44,12 @@ export default function StaffNav({ user, logout }: { user: string; logout: () =>
         </nav>
 
         <div className="ml-auto hidden items-center gap-3 text-sm xl:flex">
-          <span className="text-neutral-500">
-            Signed in as <span className="font-semibold text-neutral-900">{user}</span>
+          <span className="whitespace-nowrap text-neutral-500" title={`Signed in as ${user}`}>
+            <span className="hidden 2xl:inline">Signed in as </span>
+            <span className="font-semibold text-neutral-900">{user}</span>
           </span>
           <form action={logout}>
-            <button type="submit" className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-semibold hover:bg-neutral-100">
+            <button type="submit" className="whitespace-nowrap rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-semibold hover:bg-neutral-100">
               Sign out
             </button>
           </form>
