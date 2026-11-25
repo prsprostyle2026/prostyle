@@ -8,7 +8,8 @@ export type Fabric = {
   name: string;
   feel: string; // how it looks and feels, in a few words
   bestFor: string;
-  gsm: string; // weight range, e.g. "140–160" (confirm with your fabric supplier)
+  gsm: string; // weight range we offer, e.g. "180–220" (confirm with your fabric supplier)
+  bestGsm: string; // the range we recommend for the best quality
 };
 
 export type Category = "sportswear" | "school";
@@ -27,12 +28,12 @@ export type Product = {
 
 // Sportswear fabrics. Sublimation only bonds with polyester, so every fabric here is polyester or a polyester blend.
 export const FABRICS: Fabric[] = [
-  { name: "DotKnit", feel: "Fine dot-textured knit, light, quick-dry", bestFor: "Cricket and team jerseys, events, marathons", gsm: "180–220" },
-  { name: "Honeycomb", feel: "Textured hexagon weave, breathable", bestFor: "Cricket and football jerseys", gsm: "180–220" },
-  { name: "Mesh / Airtex", feel: "Open holes for maximum airflow", bestFor: "Football, kabaddi, training wear", gsm: "140–160" },
-  { name: "Matty", feel: "Matte finish, soft and durable", bestFor: "Corporate and school tees, polos", gsm: "180–220" },
-  { name: "Lycra (Poly-Spandex)", feel: "Stretchy, body-fitting, glossy", bestFor: "Cycling, gym and compression wear", gsm: "180–220" },
-  { name: "Interlock", feel: "Thick, double-knit, premium hand-feel", bestFor: "Polo t-shirts, premium club kits", gsm: "180–200" },
+  { name: "DotKnit", feel: "Fine dot-textured knit, light, quick-dry", bestFor: "Cricket and team jerseys, events, marathons", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Honeycomb", feel: "Textured hexagon weave, breathable", bestFor: "Cricket and football jerseys", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Mesh / Airtex", feel: "Open holes for maximum airflow", bestFor: "Football, kabaddi, training wear", gsm: "140–160", bestGsm: "150–160" },
+  { name: "Matty", feel: "Matte finish, soft and durable", bestFor: "Corporate and school tees, polos", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Lycra (Poly-Spandex)", feel: "Stretchy, body-fitting, glossy", bestFor: "Cycling, gym and compression wear", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Interlock", feel: "Thick, double-knit, premium hand-feel", bestFor: "Polo t-shirts, premium club kits", gsm: "180–200", bestGsm: "190–200" },
 ];
 
 export const PRODUCTS: Product[] = [
@@ -139,13 +140,18 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
-// Classic school-uniform fabrics for shirts, trousers and skirts. These aren't sublimated:
-// they're dyed in the school's colours, then cut and stitched. Typical GSM; confirm with your supplier.
+// Classic school-uniform fabrics for shirts, trousers, skirts and cotton tees. These aren't sublimated
+// (that needs polyester): they're dyed in the school's colours, then cut and stitched, with logos
+// embroidered or screen-printed. Typical GSM; confirm with your supplier.
 export const SCHOOL_FABRICS: Fabric[] = [
-  { name: "Poly-Cotton (PC 65:35)", feel: "Crisp, easy to iron, low shrinkage", bestFor: "School shirts", gsm: "110–130" },
-  { name: "Cotton Shirting", feel: "Soft and breathable, cool in summer", bestFor: "Shirts for younger classes", gsm: "100–120" },
-  { name: "Poly-Viscose (PV) Suiting", feel: "Smooth drape, wrinkle-resistant, holds a crease", bestFor: "Trousers, skirts, pinafores", gsm: "200–260" },
-  { name: "Terry-Wool", feel: "Rich finish, warm and hard-wearing", bestFor: "Winter trousers and skirts", gsm: "250–300" },
+  { name: "Poly-Cotton (PC 65:35)", feel: "Crisp, easy to iron, low shrinkage", bestFor: "School shirts", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Spun", feel: "Soft, cotton-like feel, breathable and durable", bestFor: "Shirts, trousers and salwar uniforms", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Cotton Shirting", feel: "100% cotton, soft and breathable, cool in summer", bestFor: "School shirts", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Cotton Twill", feel: "100% cotton, diagonal weave, strong and comfortable", bestFor: "Trousers, skirts, pinafores", gsm: "220–280", bestGsm: "240–260" },
+  { name: "Cotton Pique", feel: "100% cotton, textured knit, breathable", bestFor: "Polo and house t-shirts", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Cotton Hosiery (Jersey)", feel: "100% cotton, soft stretchy knit", bestFor: "PT t-shirts", gsm: "180–220", bestGsm: "200–220" },
+  { name: "Poly-Viscose (PV) Suiting", feel: "Smooth drape, wrinkle-resistant, holds a crease", bestFor: "Trousers, skirts, pinafores", gsm: "200–260", bestGsm: "230–260" },
+  { name: "Terry-Wool", feel: "Rich finish, warm and hard-wearing", bestFor: "Winter trousers and skirts", gsm: "250–300", bestGsm: "270–300" },
 ];
 
 export const SCHOOL_PRODUCTS: Product[] = [
@@ -153,8 +159,8 @@ export const SCHOOL_PRODUCTS: Product[] = [
     code: "SU-HT",
     category: "school",
     name: "House T-Shirt",
-    description: "Sublimated house colours with the school crest and house name, for sports day and PE.",
-    fabrics: ["DotKnit", "Matty", "Interlock"],
+    description: "House colours with the school crest and house name, for sports day and PE: sublimated, or in cotton.",
+    fabrics: ["DotKnit", "Matty", "Interlock", "Cotton Pique"],
     sizes: SIZE_RANGE,
     options: ["Round neck or polo collar", "House name on back", "School crest on chest"],
   },
@@ -163,7 +169,7 @@ export const SCHOOL_PRODUCTS: Product[] = [
     category: "school",
     name: "PT / Sports Uniform",
     description: "Matching t-shirt with shorts or track pants for weekly PT, in school colours.",
-    fabrics: ["DotKnit", "Matty", "Interlock"],
+    fabrics: ["DotKnit", "Matty", "Interlock", "Cotton Hosiery (Jersey)"],
     sizes: SIZE_RANGE,
     options: ["T-shirt + shorts or track pants", "House colour panels", "School crest"],
   },
@@ -182,7 +188,7 @@ export const SCHOOL_PRODUCTS: Product[] = [
     shape: "shirt",
     name: "School Shirt",
     description: "Everyday uniform shirt in white, a solid colour or the school's checks.",
-    fabrics: ["Poly-Cotton (PC 65:35)", "Cotton Shirting"],
+    fabrics: ["Poly-Cotton (PC 65:35)", "Spun", "Cotton Shirting"],
     sizes: SIZE_RANGE,
     options: ["Half / full sleeve", "Plain or checks", "Pocket with school logo"],
   },
@@ -192,7 +198,7 @@ export const SCHOOL_PRODUCTS: Product[] = [
     shape: "pants",
     name: "School Trousers",
     description: "Hard-wearing uniform trousers and half pants that keep their shape wash after wash.",
-    fabrics: ["Poly-Viscose (PV) Suiting", "Terry-Wool"],
+    fabrics: ["Poly-Viscose (PV) Suiting", "Spun", "Cotton Twill", "Terry-Wool"],
     sizes: SIZE_RANGE,
     options: ["Full or half pants", "Elastic or belt waist", "Side pockets"],
   },
@@ -202,7 +208,7 @@ export const SCHOOL_PRODUCTS: Product[] = [
     shape: "skirt",
     name: "Skirt / Pinafore",
     description: "Pleated skirts and pinafores in solid colours or checks, for girls' uniforms.",
-    fabrics: ["Poly-Viscose (PV) Suiting", "Terry-Wool"],
+    fabrics: ["Poly-Viscose (PV) Suiting", "Cotton Twill", "Terry-Wool"],
     sizes: KIDS_RANGE,
     options: ["Box or knife pleats", "Pinafore with straps", "Adjustable waist"],
   },

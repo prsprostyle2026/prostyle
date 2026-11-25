@@ -116,10 +116,10 @@ export default function HomePage() {
           />
           <FabricTable
             title="School uniform fabrics"
-            note="For shirts, trousers, skirts and pinafores, in white, solid colours or your school's checks. House, PT and track wear use the sportswear fabrics above."
+            note="Polyester blends and 100% cotton for shirts, trousers, skirts and cotton tees, in white, solid colours or your school's checks. Cotton is dyed in your colours, with logos embroidered or screen-printed. Sublimated house, PT and track wear use the sportswear fabrics above."
             fabrics={SCHOOL_FABRICS}
           />
-          <p className="mt-3 text-xs text-foreground/50">GSM = fabric weight in grams per square metre. Higher is thicker.</p>
+          <p className="mt-3 text-xs text-foreground/50">GSM = fabric weight in grams per square metre. Higher is thicker. Best quality = the weight we recommend for a premium, long-lasting finish.</p>
         </div>
       </section>
 
@@ -245,13 +245,14 @@ function FabricTable({ title, note, fabrics }: { title: string; note: string; fa
       <h3 className="text-lg font-bold">{title}</h3>
       <p className="mt-1 max-w-3xl text-sm text-foreground/70">{note}</p>
       <div className="mt-4 overflow-x-auto rounded-2xl border border-foreground/10 bg-background">
-        <table className="w-full min-w-xl table-fixed text-left text-sm">
+        <table className="w-full min-w-2xl table-fixed text-left text-sm">
           <thead className="border-b border-foreground/10 bg-foreground/5 text-xs uppercase tracking-wider text-foreground/60">
             <tr>
               <th scope="col" className="w-1/4 px-4 py-3">Fabric</th>
               <th scope="col" className="w-[30%] px-4 py-3">Look &amp; feel</th>
               <th scope="col" className="px-4 py-3">Best for</th>
-              <th scope="col" className="w-28 px-4 py-3 text-right">GSM</th>
+              <th scope="col" className="w-24 px-4 py-3 text-right">GSM</th>
+              <th scope="col" className="w-28 px-4 py-3 text-right text-accent-ink">Best quality</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-foreground/10">
@@ -261,6 +262,7 @@ function FabricTable({ title, note, fabrics }: { title: string; note: string; fa
                 <td className="px-4 py-3 text-foreground/70">{f.feel}</td>
                 <td className="px-4 py-3 text-foreground/70">{f.bestFor}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{f.gsm}</td>
+                <td className="px-4 py-3 text-right font-semibold tabular-nums text-accent-ink">{f.bestGsm}</td>
               </tr>
             ))}
           </tbody>
