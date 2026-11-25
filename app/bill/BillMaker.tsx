@@ -137,6 +137,8 @@ export default function BillMaker({ initial }: { initial?: InitialDoc }) {
   function changeDocType(next: DocType) {
     setDocType(next);
     setSaveError("");
+    // A new Customer Bill defaults to no GST; other types default to GST. Saved/converted documents keep theirs.
+    if (!initial) setApplyGst(next !== "Customer Bill");
     if (isBillingType(next) && customerId && !balance && !customerLocked) void loadBalance(customerId);
   }
 
