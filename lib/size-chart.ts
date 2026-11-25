@@ -27,17 +27,27 @@ export const SIZES: SizeRow[] = [
   { size: "4XL", chest: 48, kids: false },
 ];
 
-// One column group per garment fit; w and l line up with SIZES (same order).
-export type Fit = { key: FitKey; label: string; w: number[]; l: number[] };
-export type FitKey = "kabaddi" | "volleyball" | "basketball" | "shorts";
+// One column group per garment cut, for every sport and product; w and l line up with SIZES (same order).
+export type Fit = { key: string; label: string; note: string; w: number[]; l: number[] };
 
 const run = (from: number) => SIZES.map((_, i) => from + i);
 
 export const FITS: Fit[] = [
-  { key: "kabaddi", label: "Kabaddi", w: run(17), l: run(11) },
-  { key: "volleyball", label: "Volleyball", w: run(17), l: run(11) },
-  { key: "basketball", label: "Basketball", w: run(17), l: run(16) },
-  { key: "shorts", label: "Shorts", w: run(17), l: run(13) },
+  // From the printed chart (its Kabaddi and Volleyball columns, which are identical).
+  { key: "short", label: "Jersey · short cut", note: "Fitted, shorter body", w: run(17), l: run(11) },
+  // From the printed chart (its Basketball column).
+  { key: "regular", label: "Jersey · regular cut", note: "Standard t-shirt length", w: run(17), l: run(16) },
+  // From the printed chart.
+  { key: "shorts", label: "Shorts", note: "W = waist, L = length", w: run(17), l: run(13) },
+  // Not on the printed chart: standard track-pant lengths, with the same waist as the shorts.
+  // CONFIRM these lengths against your own patterns before relying on them.
+  {
+    key: "pants",
+    label: "Pants",
+    note: "W = waist, L = waist to ankle",
+    w: run(17),
+    l: [18, 20, 22, 24, 26, 28, 31, 34, 38, 39, 40, 41, 42, 42, 43],
+  },
 ];
 
 // "1Y (20) – 12Y (34)" style ranges for product listings.

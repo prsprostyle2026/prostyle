@@ -162,7 +162,8 @@ export default function HomePage() {
       {/* Size chart */}
       <section id="sizes" aria-labelledby="sizes-heading" className="mx-auto max-w-7xl scroll-mt-28 px-4 pt-16 sm:px-6">
         <SectionHeading id="sizes-heading" kicker="Find the right fit" title="Size chart">
-          Kids and adult sizes, in inches. Send us the size list with your order, one line per player.
+          One chart for every sport: jerseys, t-shirts, shorts and pants, kids to adults, in inches. Send us the size
+          list with your order, one line per player.
         </SectionHeading>
         <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_18rem]">
           <SizeChart />

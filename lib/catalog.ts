@@ -1,6 +1,6 @@
 // Product catalogue shown on the public /home page.
 // To list a new product or fabric, add an entry here; the page picks it up automatically.
-import { ADULT_RANGE, SIZE_RANGE, type FitKey } from "./size-chart";
+import { ADULT_RANGE, SIZE_RANGE } from "./size-chart";
 
 // Values marked "confirm" are typical industry figures — replace them with your own before sharing widely.
 
@@ -18,7 +18,6 @@ export type Product = {
   fabrics: string[]; // names from FABRICS
   sizes: string;
   options: string[]; // collar, sleeve, extras
-  fits?: FitKey[]; // size-chart columns that apply (lib/size-chart.ts)
 };
 
 // Sublimation only bonds with polyester, so every fabric here is polyester or a polyester blend.
@@ -71,7 +70,6 @@ export const PRODUCTS: Product[] = [
     fabrics: ["Lycra (Poly-Spandex)", "Mesh / Airtex", "Micro Polyester (Dri-fit)"],
     sizes: SIZE_RANGE,
     options: ["Sleeveless or half sleeve", "Matching shorts"],
-    fits: ["kabaddi", "shorts"],
   },
   {
     code: "PS-VB",
@@ -80,7 +78,6 @@ export const PRODUCTS: Product[] = [
     fabrics: ["Micro Polyester (Dri-fit)", "Mesh / Airtex", "Lycra (Poly-Spandex)"],
     sizes: SIZE_RANGE,
     options: ["Sleeveless or half sleeve", "Matching shorts"],
-    fits: ["volleyball", "shorts"],
   },
   {
     code: "PS-BB",
@@ -89,7 +86,6 @@ export const PRODUCTS: Product[] = [
     fabrics: ["Mesh / Airtex", "Micro Polyester (Dri-fit)"],
     sizes: SIZE_RANGE,
     options: ["Sleeveless", "Reversible on request", "Matching shorts"],
-    fits: ["basketball", "shorts"],
   },
   {
     code: "PS-SH",
@@ -98,9 +94,15 @@ export const PRODUCTS: Product[] = [
     fabrics: ["Micro Polyester (Dri-fit)", "Mesh / Airtex", "Lycra (Poly-Spandex)"],
     sizes: SIZE_RANGE,
     options: ["Side pockets", "Drawcord", "Side panel in team colours"],
-    fits: ["shorts"],
   },
   {
+    code: "PS-TP",
+    name: "Track Pants",
+    description: "Sublimated track pants to complete the kit, for training, travel and warm-ups.",
+    fabrics: ["Micro Polyester (Dri-fit)", "Lycra (Poly-Spandex)", "Interlock"],
+    sizes: SIZE_RANGE,
+    options: ["Zip pockets", "Elastic waist with drawcord", "Straight or tapered leg", "Side panel in team colours"],
+  },  {
     code: "PS-VN",
     name: "V-Neck T-Shirt",
     description: "Sporty V-neck in any design, popular for gyms, clubs and fan wear.",
