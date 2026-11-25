@@ -1,7 +1,7 @@
 "use server";
 
 import { isValidPhone } from "@/app/bill/phone";
-import { PRODUCTS } from "@/lib/catalog";
+import { ALL_PRODUCTS } from "@/lib/catalog";
 import { query } from "@/lib/db";
 import { LIMITS, OTHER_PRODUCT } from "@/lib/enquiry-options";
 
@@ -11,7 +11,7 @@ export type EnquiryState =
   | undefined;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PRODUCT_NAMES = new Set([...PRODUCTS.map((p) => p.name), OTHER_PRODUCT]);
+const PRODUCT_NAMES = new Set([...ALL_PRODUCTS.map((p) => p.name), OTHER_PRODUCT]);
 
 // Saves a wholesale enquiry from the public /home page. Staff see it at /enquiries.
 export async function submitEnquiry(_prev: EnquiryState, formData: FormData): Promise<EnquiryState> {

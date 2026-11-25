@@ -8,7 +8,7 @@ const inputCls =
   "w-full rounded-md border border-foreground/15 bg-background px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 // Public wholesale enquiry form on /home. Saved to the database; staff follow up at /enquiries.
-export default function EnquiryForm({ products }: { products: string[] }) {
+export default function EnquiryForm({ groups }: { groups: { label: string; products: string[] }[] }) {
   const [state, formAction, pending] = useActionState(submitEnquiry, undefined);
 
   if (state?.ok) {
@@ -42,8 +42,12 @@ export default function EnquiryForm({ products }: { products: string[] }) {
         <Field label="Product">
           <select name="product" defaultValue={v?.product ?? ""} className={inputCls}>
             <option value="">Choose…</option>
-            {products.map((p) => (
-              <option key={p}>{p}</option>
+            {groups.map((g) => (
+              <optgroup key={g.label} label={g.label}>
+                {g.products.map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </optgroup>
             ))}
             <option>{OTHER_PRODUCT}</option>
           </select>

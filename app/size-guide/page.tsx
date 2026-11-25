@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PrintButton from "../components/PrintButton";
 import SizeChart, { HowToMeasure } from "../components/SizeChart";
-import { PRODUCTS } from "@/lib/catalog";
+import { ALL_PRODUCTS } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Size Guide: Prostyle Sports Wear",
@@ -36,7 +36,7 @@ export default function SizeGuidePage() {
       <section aria-labelledby="covers-heading" className="mt-10 print:hidden">
         <h2 id="covers-heading" className="text-lg font-bold">One chart for all our products</h2>
         <ul className="mt-3 flex flex-wrap gap-2 text-sm">
-          {PRODUCTS.map((p) => (
+          {ALL_PRODUCTS.map((p) => (
             <li key={p.code} className="rounded-full border border-foreground/15 px-3 py-1">
               {p.name}
             </li>

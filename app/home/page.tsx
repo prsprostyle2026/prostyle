@@ -3,13 +3,13 @@ import Link from "next/link";
 import ContactDetails from "../components/ContactDetails";
 import EnquiryForm from "../components/EnquiryForm";
 import SizeChart, { HowToMeasure } from "../components/SizeChart";
-import { BUYERS, FABRICS, PRODUCTS } from "@/lib/catalog";
+import { ALL_PRODUCTS, BUYERS, CATEGORIES, FABRICS, SCHOOL_FABRICS, type Fabric, type Product, type Shape } from "@/lib/catalog";
 import { CONTACT_PHONES, telHref } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Prostyle Sports Wear: Sublimation T-Shirt Manufacturer, Wholesale",
   description:
-    "Prostyle Sports Wear manufactures custom sublimation t-shirts, jerseys and polos in Bengaluru in a range of polyester fabrics, sold wholesale to teams, schools, companies and resellers.",
+    "Prostyle Sports Wear manufactures custom sublimation t-shirts, jerseys, polos and school uniforms in Bengaluru, sold wholesale to teams, schools, companies and resellers.",
 };
 
 const HIGHLIGHTS = [
@@ -49,8 +49,8 @@ export default function HomePage() {
               Custom sublimation <span className="text-gold-light">t-shirts</span>, made to perform
             </h1>
             <p className="mt-6 max-w-xl text-base text-neutral-300 sm:text-lg">
-              Prostyle Sports Wear designs and manufactures all-over sublimation t-shirts, jerseys and polos in a
-              choice of performance fabrics, supplied wholesale to teams, schools, companies and resellers.
+              Prostyle Sports Wear designs and manufactures all-over sublimation t-shirts, jerseys and polos, and
+              complete school uniforms, supplied wholesale to teams, schools, companies and resellers.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -89,73 +89,36 @@ export default function HomePage() {
 
       {/* Products */}
       <section id="products" aria-labelledby="products-heading" className="mx-auto max-w-7xl scroll-mt-28 px-4 py-16 sm:px-6">
-        <SectionHeading id="products-heading" kicker="What we make" title="Our product range">
-          Every style can be printed in any design, with team names, player numbers and sponsor logos at no extra cost.
-        </SectionHeading>
-        <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {PRODUCTS.map((p, i) => (
-            <li key={p.code} className="flex flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/3">
-              <div className="flex justify-center bg-neutral-100 py-6 dark:bg-neutral-900" aria-hidden>
-                <Tee uid={p.code} colors={SWATCHES[i % SWATCHES.length]} className="w-32" />
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <div className="flex items-baseline justify-between gap-3">
-                  <h3 className="text-lg font-bold">{p.name}</h3>
-                  <span className="font-mono text-xs text-foreground/50">{p.code}</span>
-                </div>
-                <p className="mt-2 text-sm text-foreground/70">{p.description}</p>
-                <dl className="mt-4 space-y-2 text-sm">
-                  <div>
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-accent-ink">Fabrics</dt>
-                    <dd>{p.fabrics.join(" · ")}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-accent-ink">Sizes</dt>
-                    <dd>
-                      {p.sizes}{" "}
-                      <a href="#sizes" className="whitespace-nowrap font-semibold text-accent-ink hover:underline">Size chart</a>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-accent-ink">Options</dt>
-                    <dd>{p.options.join(" · ")}</dd>
-                  </div>
-                </dl>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <SectionHeading id="products-heading" kicker="What we make" title="Our product range" />
+        {CATEGORIES.map((cat) => (
+          <div key={cat.key} id={cat.key} className="mt-12 scroll-mt-28 first-of-type:mt-10">
+            <h3 className="text-xl font-black uppercase italic tracking-tight">{cat.title}</h3>
+            <p className="mt-1 max-w-3xl text-sm text-foreground/70">{cat.intro}</p>
+            <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {ALL_PRODUCTS.filter((p) => p.category === cat.key).map((p, i) => (
+                <ProductCard key={p.code} p={p} colors={SWATCHES[(i + (cat.key === "school" ? 3 : 0)) % SWATCHES.length]} />
+              ))}
+            </ul>
+          </div>
+        ))}
       </section>
 
       {/* Fabrics */}
       <section id="fabrics" aria-labelledby="fabrics-heading" className="scroll-mt-28 bg-foreground/3">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-          <SectionHeading id="fabrics-heading" kicker="Choose your fabric" title="Fabrics we print on">
-            Sublimation bonds permanently with polyester, so all our fabrics are polyester or polyester blends.
-            Pick the one that suits your sport and budget. Every fabric is available for cricket jerseys too.
+          <SectionHeading id="fabrics-heading" kicker="Choose your fabric" title="Our fabrics">
+            Pick the fabric that suits your sport, school and budget.
           </SectionHeading>
-          <div className="mt-10 overflow-x-auto rounded-2xl border border-foreground/10 bg-background">
-            <table className="w-full min-w-xl text-left text-sm">
-              <thead className="border-b border-foreground/10 bg-foreground/5 text-xs uppercase tracking-wider text-foreground/60">
-                <tr>
-                  <th scope="col" className="px-4 py-3">Fabric</th>
-                  <th scope="col" className="px-4 py-3">Look &amp; feel</th>
-                  <th scope="col" className="px-4 py-3">Best for</th>
-                  <th scope="col" className="px-4 py-3 text-right">GSM</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-foreground/10">
-                {FABRICS.map((f) => (
-                  <tr key={f.name}>
-                    <th scope="row" className="px-4 py-3 font-semibold">{f.name}</th>
-                    <td className="px-4 py-3 text-foreground/70">{f.feel}</td>
-                    <td className="px-4 py-3 text-foreground/70">{f.bestFor}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{f.gsm}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <FabricTable
+            title="Sportswear fabrics"
+            note="Sublimation bonds permanently with polyester, so all our sportswear fabrics are polyester or polyester blends. Every one is available for cricket jerseys too."
+            fabrics={FABRICS}
+          />
+          <FabricTable
+            title="School uniform fabrics"
+            note="For shirts, trousers, skirts and pinafores, in white, solid colours or your school's checks. House, PT and track wear use the sportswear fabrics above."
+            fabrics={SCHOOL_FABRICS}
+          />
           <p className="mt-3 text-xs text-foreground/50">GSM = fabric weight in grams per square metre. Higher is thicker.</p>
         </div>
       </section>
@@ -235,13 +198,109 @@ export default function HomePage() {
               </address>
             </div>
           </div>
-          <EnquiryForm products={PRODUCTS.map((p) => p.name)} />
+          <EnquiryForm groups={CATEGORIES.map((cat) => ({ label: cat.title, products: ALL_PRODUCTS.filter((p) => p.category === cat.key).map((p) => p.name) }))} />
         </div>
       </section>
     </main>
   );
 }
 
+function ProductCard({ p, colors }: { p: Product; colors: string[] }) {
+  return (
+    <li className="flex flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/3">
+      <div className="flex justify-center bg-neutral-100 py-6 dark:bg-neutral-900" aria-hidden>
+        <Garment uid={p.code} shape={p.shape ?? "tee"} colors={colors} className="w-32" />
+      </div>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h4 className="text-lg font-bold">{p.name}</h4>
+          <span className="font-mono text-xs text-foreground/50">{p.code}</span>
+        </div>
+        <p className="mt-2 text-sm text-foreground/70">{p.description}</p>
+        <dl className="mt-4 space-y-2 text-sm">
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-accent-ink">Fabrics</dt>
+            <dd>{p.fabrics.join(" · ")}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-accent-ink">Sizes</dt>
+            <dd>
+              {p.sizes}{" "}
+              <a href="#sizes" className="whitespace-nowrap font-semibold text-accent-ink hover:underline">Size chart</a>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-accent-ink">Options</dt>
+            <dd>{p.options.join(" · ")}</dd>
+          </div>
+        </dl>
+      </div>
+    </li>
+  );
+}
+
+function FabricTable({ title, note, fabrics }: { title: string; note: string; fabrics: Fabric[] }) {
+  return (
+    <div className="mt-10">
+      <h3 className="text-lg font-bold">{title}</h3>
+      <p className="mt-1 max-w-3xl text-sm text-foreground/70">{note}</p>
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-foreground/10 bg-background">
+        <table className="w-full min-w-xl table-fixed text-left text-sm">
+          <thead className="border-b border-foreground/10 bg-foreground/5 text-xs uppercase tracking-wider text-foreground/60">
+            <tr>
+              <th scope="col" className="w-1/4 px-4 py-3">Fabric</th>
+              <th scope="col" className="w-[30%] px-4 py-3">Look &amp; feel</th>
+              <th scope="col" className="px-4 py-3">Best for</th>
+              <th scope="col" className="w-28 px-4 py-3 text-right">GSM</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-foreground/10">
+            {fabrics.map((f) => (
+              <tr key={f.name}>
+                <th scope="row" className="px-4 py-3 font-semibold">{f.name}</th>
+                <td className="px-4 py-3 text-foreground/70">{f.feel}</td>
+                <td className="px-4 py-3 text-foreground/70">{f.bestFor}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{f.gsm}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// Product card illustration: a t-shirt, or simple shorts / pants / skirt silhouettes.
+const OUTLINES: Record<Exclude<Shape, "tee" | "shirt">, string> = {
+  shorts: "M50 30 L150 30 L162 130 L108 130 L100 80 L92 130 L38 130 Z",
+  pants: "M58 18 L142 18 L150 190 L112 190 L100 70 L88 190 L50 190 Z",
+  skirt: "M68 30 L132 30 L172 170 Q100 186 28 170 Z",
+};
+
+function Garment({ uid, shape, colors, className }: { uid: string; shape: Shape; colors: string[]; className?: string }) {
+  if (shape === "tee") return <Tee uid={uid} colors={colors} className={className} />;
+  const [base, stripe] = colors;
+  if (shape === "shirt") {
+    // Plain uniform shirt: solid colour, collar, button placket and a pocket.
+    return (
+      <svg viewBox="0 0 200 200" className={`drop-shadow-xl ${className}`}>
+        <path d={TEE_PATH} fill="#f4f6fb" stroke="#0b0b0b" strokeOpacity="0.25" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M70 18 L100 52 L130 18 L118 14 L100 34 L82 14 Z" fill="#ffffff" stroke="#0b0b0b" strokeOpacity="0.3" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M100 52 L100 186" stroke="#0b0b0b" strokeOpacity="0.2" strokeWidth="2" />
+        {[72, 98, 124, 150].map((y) => <circle key={y} cx="100" cy={y} r="3" fill={base} />)}
+        <rect x="120" y="72" width="22" height="24" rx="2" fill="none" stroke={base} strokeWidth="2" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 200 200" className={`drop-shadow-xl ${className}`}>
+      <path d={OUTLINES[shape]} fill={base} stroke="#0b0b0b" strokeOpacity="0.25" strokeWidth="2" strokeLinejoin="round" />
+      <rect x={shape === "skirt" ? 68 : shape === "pants" ? 58 : 50} y={shape === "pants" ? 18 : 30} width={shape === "skirt" ? 64 : shape === "pants" ? 84 : 100} height="10" fill={stripe} />
+      {shape !== "skirt" && <path d={shape === "pants" ? "M146 40 L150 190" : "M154 50 L160 125"} stroke={stripe} strokeWidth="6" />}
+      {shape === "skirt" && <path d="M84 40 L64 176 M100 40 L100 180 M116 40 L136 176" stroke={stripe} strokeOpacity="0.5" strokeWidth="3" />}
+    </svg>
+  );
+}
 function SectionHeading({ id, kicker, title, children }: { id: string; kicker: string; title: string; children?: React.ReactNode }) {
   return (
     <div className="max-w-2xl">
@@ -251,6 +310,8 @@ function SectionHeading({ id, kicker, title, children }: { id: string; kicker: s
     </div>
   );
 }
+
+const TEE_PATH = "M70 18 L40 28 L8 62 L32 86 L48 72 L48 186 L152 186 L152 72 L168 86 L192 62 L160 28 L130 18 Q100 44 70 18 Z";
 
 // A simple t-shirt silhouette with a diagonal "sublimated" stripe pattern.
 function Tee({ uid, colors: [base, stripe], className = "" }: { uid: string; colors: string[]; className?: string }) {
@@ -265,7 +326,7 @@ function Tee({ uid, colors: [base, stripe], className = "" }: { uid: string; col
         </pattern>
       </defs>
       <path
-        d="M70 18 L40 28 L8 62 L32 86 L48 72 L48 186 L152 186 L152 72 L168 86 L192 62 L160 28 L130 18 Q100 44 70 18 Z"
+        d={TEE_PATH}
         fill={`url(#${id})`}
         stroke="#0b0b0b"
         strokeOpacity="0.25"
