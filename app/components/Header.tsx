@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import Logo from "./Logo";
 
-// Shop pages don't exist yet, so these point to "#" until they launch.
+// Shop pages don't exist yet, so most of these point to "#" until they launch.
 const NAV_LINKS = [
   { label: "Men", href: "#" },
   { label: "Women", href: "#" },
   { label: "Kids", href: "#" },
-  { label: "Collections", href: "#" },
+  { label: "Designs", href: "/designs" },
   { label: "About", href: "#" },
 ];
 

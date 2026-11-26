@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { DESIGN_IMAGE, DESIGNS } from "@/lib/designs";
 import ContactDetails from "../components/ContactDetails";
 import EnquiryForm from "../components/EnquiryForm";
 import SizeChart, { HowToMeasure } from "../components/SizeChart";
@@ -65,6 +67,12 @@ export default function HomePage() {
               >
                 <span className="inline-block skew-x-12">View products</span>
               </a>
+              <Link
+                href="/designs"
+                className="-skew-x-12 rounded-md border border-white/30 px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition-colors hover:border-gold-light hover:text-gold-light"
+              >
+                <span className="inline-block skew-x-12">Design catalogue</span>
+              </Link>
             </div>
           </div>
           <div className="flex justify-center gap-4 sm:gap-6" aria-hidden>
@@ -101,6 +109,36 @@ export default function HomePage() {
             </ul>
           </div>
         ))}
+      </section>
+
+      {/* Design catalogue preview */}
+      <section id="designs" aria-labelledby="designs-heading" className="mx-auto max-w-7xl scroll-mt-28 px-4 pb-16 sm:px-6">
+        <SectionHeading id="designs-heading" kicker="Ready-made designs" title="Design catalogue">
+          Choose from {DESIGNS.length} ready-made sublimation designs, then make it yours with your colours, names,
+          numbers and logos.
+        </SectionHeading>
+        <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {DESIGNS.slice(0, 8).map((d) => (
+            <li key={d.no}>
+              <Link href="/designs" className="group block overflow-hidden rounded-xl border border-foreground/10 bg-white shadow-sm hover:shadow-lg">
+                <Image
+                  src={d.src}
+                  alt={`Design ${d.no}`}
+                  width={DESIGN_IMAGE.width}
+                  height={DESIGN_IMAGE.height}
+                  sizes="(min-width: 1024px) 300px, 50vw"
+                  className="h-auto w-full transition-transform duration-300 group-hover:scale-[1.03]"
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <Link
+          href="/designs"
+          className="mt-6 inline-block rounded-md bg-accent px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-accent-foreground hover:bg-accent-hover"
+        >
+          See all {DESIGNS.length} designs
+        </Link>
       </section>
 
       {/* Fabrics */}

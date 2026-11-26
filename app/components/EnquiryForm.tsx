@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
+import { isDesignNo } from "@/lib/designs";
 import { submitEnquiry } from "../enquiry-actions";
 import { LIMITS, OTHER_PRODUCT } from "@/lib/enquiry-options";
 
@@ -10,6 +11,15 @@ const inputCls =
 // Public wholesale enquiry form on /home. Saved to the database; staff follow up at /enquiries.
 export default function EnquiryForm({ groups }: { groups: { label: string; products: string[] }[] }) {
   const [state, formAction, pending] = useActionState(submitEnquiry, undefined);
+  const message = useRef<HTMLTextAreaElement>(null);
+
+  // Coming from "Enquire about this design" (/home?design=17#enquire): start the message for them.
+  useEffect(() => {
+    const design = new URLSearchParams(window.location.search).get("design");
+    if (isDesignNo(design) && message.current && !message.current.value) {
+      message.current.value = `I'm interested in Design ${design} from your catalogue. `;
+    }
+  }, []);
 
   if (state?.ok) {
     return (
@@ -58,6 +68,7 @@ export default function EnquiryForm({ groups }: { groups: { label: string; produ
       </div>
       <Field label="Message">
         <textarea
+          ref={message}
           name="message"
           rows={3}
           maxLength={LIMITS.message}
