@@ -10,7 +10,8 @@ import { requireUser } from "@/lib/auth";
 import { getPayment, receiptNumber } from "@/lib/documents";
 import { balanceLabel, rupees } from "@/lib/format";
 import FitToWidth from "../../components/FitToWidth";
-import PrintButton from "../../components/PrintButton";
+import { pdfFileName } from "../../bill/pdf";
+import SharePdfButtons from "../../components/SharePdfButtons";
 import StaffBar from "../../components/StaffBar";
 import VoidPaymentForm from "./VoidPaymentForm";
 
@@ -49,8 +50,29 @@ async function ReceiptContent({
           <Link href={`/customers/${p.customerId}`} className="text-sm font-semibold text-foreground/60 hover:text-accent-ink">
             ← {p.customerName}
           </Link>
-          <PrintButton fileName={`${no}_${p.customerName.replace(/\s+/g, "_")}`} autoPrint={sp.print === "1" && !p.voided} />
+          <div className="flex w-full flex-wrap items-start gap-2 sm:w-auto">
+            {!p.voided && (
+              <Link
+                href={`/payments/${p.id}/edit`}
+                className="flex w-full items-center justify-center rounded-lg border border-foreground/15 px-4 py-2.5 text-sm font-bold uppercase tracking-wider hover:bg-foreground/5 sm:w-auto"
+              >
+                Edit
+              </Link>
+            )}
+            <SharePdfButtons
+              key={[p.amount, p.paidOn, p.method, p.note, p.voided].join("|")}
+              fileName={pdfFileName(no, p.customerName)}
+              title={`Payment receipt ${no}`}
+            />
+          </div>
         </div>
+
+        {sp.saved === "1" && !p.voided && (
+          <div role="status" className="mb-4 rounded-xl border border-green-600/30 bg-green-600/10 p-3 text-sm print:hidden">
+            <p className="font-bold">Payment saved.</p>
+            <p className="mt-0.5 text-foreground/70">Share the receipt with the customer or print it.</p>
+          </div>
+        )}
 
         {p.voided && (
           <div className="mb-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm print:hidden">

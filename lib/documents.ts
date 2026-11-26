@@ -145,6 +145,7 @@ export type PaymentRecord = {
   paidOn: string;
   method: string;
   note: string;
+  receivedBy: string | null; // staff-only; not shown on the receipt
   createdBy: string;
   createdAt: string;
   voided: boolean;
@@ -159,7 +160,7 @@ export async function getPayment(id: string): Promise<PaymentRecord | null> {
   const { rows } = await query<PaymentRecord>(
     `SELECT p.id, p.customer_id AS "customerId", c.name AS "customerName", c.phone AS "customerPhone",
             p.amount::float8 AS amount, to_char(p.paid_on, 'YYYY-MM-DD') AS "paidOn", p.method, p.note,
-            p.created_by AS "createdBy", ${IST("p.created_at")} AS "createdAt",
+            p.received_by AS "receivedBy", p.created_by AS "createdBy", ${IST("p.created_at")} AS "createdAt",
             p.voided_at IS NOT NULL AS voided, p.void_reason AS "voidReason", p.voided_by AS "voidedBy",
             ${IST("p.voided_at")} AS "voidedAt", l.balance::float8 AS "balanceAfter"
      FROM customer_payments p

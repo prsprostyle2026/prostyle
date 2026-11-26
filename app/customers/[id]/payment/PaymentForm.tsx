@@ -4,22 +4,39 @@ import { useActionState, useState } from "react";
 import { balanceLabel } from "@/lib/format";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { RECEIVERS } from "@/lib/receivers";
-import { recordPayment } from "./actions";
+import { recordPayment, updatePayment } from "./actions";
 
 const inputCls =
   "w-full rounded-md border border-foreground/15 bg-background px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
 
+export type EditablePayment = {
+  id: string;
+  amount: number;
+  paidOn: string;
+  method: string;
+  receivedBy: string | null;
+  note: string;
+};
+
+// Records a new payment, or edits an existing one when `payment` is given.
 export default function PaymentForm({
   customerId,
   pending,
   today,
+  payment,
 }: {
   customerId: string;
-  pending: number;
+  pending: number; // balance before this payment
   today: string; // yyyy-mm-dd, India time
+  payment?: EditablePayment;
 }) {
-  const [state, formAction, saving] = useActionState(recordPayment.bind(null, customerId), undefined);
-  const [amount, setAmount] = useState("");
+  const [state, formAction, saving] = useActionState(
+    payment ? updatePayment.bind(null, payment.id) : recordPayment.bind(null, customerId),
+    undefined,
+  );
+  const [amount, setAmount] = useState(payment ? String(payment.amount) : "");
+  const initial: Record<string, string> | undefined =
+    state?.values ?? (payment && { paidOn: payment.paidOn, method: payment.method, receivedBy: payment.receivedBy ?? "", note: payment.note });
   const paying = Math.round((Number(amount) || 0) * 100) / 100;
 
   return (
@@ -50,11 +67,11 @@ export default function PaymentForm({
       <div className="grid grid-cols-2 gap-3">
         <label className="block space-y-1">
           <span className="text-xs font-medium text-foreground/70">Paid on</span>
-          <input name="paidOn" type="date" required defaultValue={state?.values?.paidOn ?? today} className={inputCls} />
+          <input name="paidOn" type="date" required defaultValue={initial?.paidOn ?? today} className={inputCls} />
         </label>
         <label className="block space-y-1">
           <span className="text-xs font-medium text-foreground/70">Method</span>
-          <select name="method" required defaultValue={state?.values?.method ?? "Cash"} className={inputCls}>
+          <select name="method" required defaultValue={initial?.method ?? "Cash"} className={inputCls}>
             {PAYMENT_METHODS.map((m) => (
               <option key={m}>{m}</option>
             ))}
@@ -63,7 +80,7 @@ export default function PaymentForm({
       </div>
       <label className="block space-y-1">
         <span className="text-xs font-medium text-foreground/70">Received by</span>
-        <select name="receivedBy" required defaultValue={state?.values?.receivedBy ?? ""} className={inputCls}>
+        <select name="receivedBy" required defaultValue={initial?.receivedBy ?? ""} className={inputCls}>
           <option value="" disabled>
             Choose…
           </option>
@@ -74,7 +91,7 @@ export default function PaymentForm({
       </label>
       <label className="block space-y-1">
         <span className="text-xs font-medium text-foreground/70">Note (optional)</span>
-        <input name="note" maxLength={500} placeholder="e.g. UPI ref 4321" defaultValue={state?.values?.note} className={inputCls} />
+        <input name="note" maxLength={500} placeholder="e.g. UPI ref 4321" defaultValue={initial?.note} className={inputCls} />
       </label>
 
       {paying > 0 && (
@@ -93,7 +110,7 @@ export default function PaymentForm({
         disabled={saving}
         className="w-full rounded-lg bg-accent py-3 text-sm font-bold uppercase tracking-wider text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
       >
-        {saving ? "Saving…" : "Save payment"}
+        {saving ? "Saving…" : payment ? "Save changes" : "Save payment"}
       </button>
     </form>
   );
